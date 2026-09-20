@@ -1,0 +1,56 @@
+# golangci-lint v2 configuration
+# Docs: https://golangci-lint.run/docs/configuration/
+
+version: "2"
+
+run:
+  timeout: 5m
+
+linters:
+  default: standard # errcheck, govet, ineffassign, staticcheck, unused
+  enable:
+    - bodyclose
+    - contextcheck
+    - errorlint
+    - gocritic
+    - gosec
+    - misspell
+    - nilerr
+    - noctx
+    - revive
+    - unconvert
+    - unparam
+    - wrapcheck
+  settings:
+    misspell:
+      locale: US
+    wrapcheck:
+      # Errors crossing a package boundary must be wrapped (requirements §6.2, A-5).
+      ignore-sig-regexps:
+        - fmt\.Errorf\(
+        - status\.Error
+    revive:
+      rules:
+        - name: exported
+        - name: package-comments
+        - name: context-as-argument
+        - name: error-return
+        - name: error-strings
+        - name: receiver-naming
+  exclusions:
+    presets:
+      - std-error-handling
+    paths:
+      - gen/
+
+formatters:
+  enable:
+    - gofumpt
+    - goimports
+  settings:
+    goimports:
+      local-prefixes:
+        - github.com/nightCode42/gokvx
+  exclusions:
+    paths:
+      - gen/
