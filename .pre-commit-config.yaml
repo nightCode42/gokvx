@@ -1,0 +1,91 @@
+# .pre-commit-config.yaml — git hook configuration for gokvx
+# Docs: https://pre-commit.com
+#
+# Install everything:  make setup
+# Register hooks only: make hooks-install
+# Run manually:        pre-commit run --all-files
+#
+# Stages:
+#   pre-commit  fast checks on every commit (hygiene, secrets, format, lint)
+#   commit-msg  Conventional Commits validation
+#   pre-push    slower checks (tests, vulnerability scan)
+
+default_install_hook_types: [pre-commit, commit-msg, pre-push]
+default_stages: [pre-commit]
+
+repos:
+  # ── General file hygiene ──────────────────────────────────────────────────
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v6.0.0
+    hooks:
+      - id: trailing-whitespace
+        args: [--markdown-linebreak-ext=md]
+      - id: end-of-file-fixer
+      - id: mixed-line-ending
+        args: [--fix=lf]
+      - id: check-yaml
+        exclude: ^deploy/helm/.*/templates/ # Helm templates are not plain YAML
+      - id: check-toml
+      - id: check-json
+      - id: check-merge-conflict
+      - id: check-case-conflict
+      - id: check-added-large-files
+        args: [--maxkb=500]
+      - id: check-executables-have-shebangs
+      - id: check-shebang-scripts-are-executable
+      - id: detect-private-key
+      - id: no-commit-to-branch
+        args: [--branch=main]
+
+  # ── Secret scanning ───────────────────────────────────────────────────────
+  - repo: https://github.com/gitleaks/gitleaks
+    rev: v8.30.1
+    hooks:
+      - id: gitleaks
+        args: [--config=.gitleaks.toml]
+
+  # ── Go (uses the pinned tools installed by `make setup`) ──────────────────
+  - repo: local
+    hooks:
+      - id: golangci-lint-fmt
+        name: golangci-lint fmt (gofumpt + goimports)
+        language: system
+        entry: sh -c 'exec "$(go env GOPATH)/bin/golangci-lint" fmt "$@"' --
+        types: [go]
+
+      - id: golangci-lint
+        name: golangci-lint
+        language: system
+        entry: sh -c 'exec "$(go env GOPATH)/bin/golangci-lint" run --fix'
+        types: [go]
+        pass_filenames: false
+
+      - id: go-mod-tidy
+        name: go mod tidy
+        language: system
+        entry: go mod tidy -diff
+        files: (\.go|go\.mod|go\.sum)$
+        pass_filenames: false
+
+      - id: go-test
+        name: go test
+        language: system
+        entry: go test ./...
+        types: [go]
+        pass_filenames: false
+        stages: [pre-push]
+
+      - id: govulncheck
+        name: govulncheck
+        language: system
+        entry: sh -c 'exec "$(go env GOPATH)/bin/govulncheck" ./...'
+        files: (\.go|go\.mod|go\.sum)$
+        pass_filenames: false
+        stages: [pre-push]
+
+      # ── Commit message: Conventional Commits ──────────────────────────────
+      - id: conventional-commit-msg
+        name: conventional commit message
+        language: script
+        entry: scripts/check-commit-msg.sh
+        stages: [commit-msg]
