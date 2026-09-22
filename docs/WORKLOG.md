@@ -12,7 +12,7 @@ Per-requirement implementation status is **not** tracked here; it lives only in 
 |---|---|
 | Phase | Phase 1 — Durable core |
 | Active branch | `feat/proto-contract` |
-| Active work | Wire contract: `.proto` files done; next `buf` configuration, pinned tools, `make proto`, generated code (run by the maintainer), CI checks |
+| Active work | Wire contract: `.proto` files and `buf` tooling done; waiting for the maintainer to run `make proto` and commit `gen/` |
 | Requirement IDs | `KV-API-000`, `KV-API-002`, `KV-API-003`, `KV-API-080`–`082` |
 
 ## Next up
@@ -31,6 +31,7 @@ In order. Each item is one branch and one pull request.
 
 ## Hand-off notes
 
+- 2026-09-22 — `buf` tooling added: `buf.yaml` (STANDARD + COMMENTS lint, FILE breaking) and `buf.gen.yaml` at the repository root (maintainer's decision; spec §22 updated), `buf` and both plugins pinned as `go.mod` tool directives, `make proto` / `proto-lint` / `proto-breaking` / `proto-check`, and a CI `Proto` job. Generation verified in a scratch copy: builds, vets, and regenerates identically. Add `Proto` to the required checks of the `main` ruleset once merged.
 - 2026-09-22 — Wire contract written in `proto/gokvx/v1/` (five files, all phases); compiles and passes `buf` STANDARD lint. Maintainer accepted deviations from Appendix A: separate `TxnService`, `Service` suffix on all services, RPC-named request and response messages, `_seconds` / `_bytes` unit suffixes, reserved field names. Appendix A updated to match. Revision semantics clarified: only commands that write at least one key consume a revision (`KV-DAT-001`); the current revision is persisted explicitly (new `KV-DAT-008`). Spec bumped to 1.1.0. Document–code divergence rule added to `AGENTS.md` §3.
 - 2026-09-22 — Working agreement and handbook merged (#3). Follow-up: the project is described by what it does rather than as a "reference implementation", and the PR checklist separates items for every change from items for requirement work.
 - 2026-09-22 — Repository published. CI, pre-commit hooks, branch ruleset on `main`, CodeQL, Dependabot, and private vulnerability reporting are active. Working agreement and handbook drafted on `docs/engineering-guidelines`.

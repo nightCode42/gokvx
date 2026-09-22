@@ -1,0 +1,16 @@
+# Code generation — https://buf.build/docs/configuration/v2/buf-gen-yaml
+# Plugins run locally through `go tool`, at the versions pinned in go.mod,
+# so generation is reproducible and needs no network service.
+
+version: v2
+
+clean: true # regenerate gen/ from scratch so no stale files survive
+
+plugins:
+  - local: ["go", "tool", "protoc-gen-go"]
+    out: gen
+    opt: paths=source_relative
+
+  - local: ["go", "tool", "protoc-gen-go-grpc"]
+    out: gen
+    opt: paths=source_relative

@@ -52,7 +52,8 @@ Standard library packages used where others often reach for a dependency: `log/s
 
 | Tool | Pinned in | Used for |
 |---|---|---|
-| `buf`, `protoc-gen-go`, `protoc-gen-go-grpc` | `go.mod` `tool` directives | Protocol Buffer linting, breaking-change detection, and code generation |
+| `buf` | `tools/go.mod` `tool` directive | Protocol Buffer linting, breaking-change detection, and generation. It lives in its own module so its large dependency tree stays out of the main one. |
+| `protoc-gen-go`, `protoc-gen-go-grpc` | `go.mod` `tool` directives | Code generation. Pinned in the main module so their versions track the protobuf and gRPC runtimes. |
 | `golangci-lint` | `Makefile`, CI | Linting and formatting |
 | `govulncheck` | `Makefile`, CI | Vulnerability scanning |
 | `gitleaks` | `Makefile`, CI, pre-commit | Secret scanning |
@@ -100,7 +101,7 @@ The choices below were made when the project started. Each records what was chos
 
 ### Protocol Buffers: `buf` with local plugins
 
-**Chosen:** `buf` for linting, breaking-change detection, and generation, with `protoc-gen-go` and `protoc-gen-go-grpc` run locally. All three are pinned as `tool` directives in `go.mod` and run through `go tool`.
+**Chosen:** `buf` for linting, breaking-change detection, and generation, with `protoc-gen-go` and `protoc-gen-go-grpc` run locally. All three are pinned as `tool` directives and run through `go tool`: the plugins in `go.mod`, so their versions stay aligned with the protobuf and gRPC runtimes, and `buf` in a separate `tools/go.mod`, so its roughly ninety transitive dependencies never enter the main module's graph.
 **Why:** Generation is hermetic and reproducible — the same versions on every machine and in CI, recorded in `go.mod`, updated by Dependabot, and with no dependency on an external service at build time.
 **Rejected:** Buf Schema Registry remote plugins — generation would depend on network access and a third-party service, and plugin versions would live outside `go.mod`. Raw `protoc` — needs a separately installed binary and offers no built-in lint or breaking-change checks.
 

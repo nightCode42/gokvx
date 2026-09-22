@@ -38,6 +38,24 @@ jobs:
       - name: go mod tidy
         run: make tidy-check
 
+  proto:
+    name: Proto
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0 # the breaking-change check compares against the latest release tag
+      - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
+        with:
+          go-version-file: go.mod
+      - name: Lint .proto files
+        run: make proto-lint
+      - name: Check for breaking changes
+        run: make proto-breaking
+      - name: Check generated code is up to date
+        run: make proto-check
+
   test:
     name: Test
     runs-on: ubuntu-latest

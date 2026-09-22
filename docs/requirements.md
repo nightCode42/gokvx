@@ -1359,8 +1359,10 @@ A monorepo is used so that the `.proto` contract, both services, the deployment 
 │   └── openapi.yaml                  # microservice-1 REST contract
 ├── proto/
 │   └── gokvx/v1/                     # authoritative wire contract
-│       ├── kv.proto  watch.proto  lease.proto  txn.proto  cluster.proto
-│       └── buf.yaml  buf.gen.yaml
+│       └── kv.proto  watch.proto  lease.proto  txn.proto  cluster.proto
+├── gen/
+│   └── gokvx/v1/                     # generated Go code — committed, never edited (KV-API-002)
+├── buf.yaml  buf.gen.yaml            # buf lint, breaking-change, and generation config
 ├── cmd/
 │   ├── gokvx/                        # server binary
 │   ├── gokvxctl/                     # CLI + TUI dashboard

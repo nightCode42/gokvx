@@ -48,7 +48,7 @@ How a change moves from an idea to `main`. The rules here apply to every contrib
 - The PR title is a valid Conventional Commits header — it becomes the single commit on `main` when squash-merged.
 - The description follows the [pull request template](../../.github/pull_request_template.md): what, why, how it was verified, and the checklist.
 - Target size: under ~400 changed lines excluding generated code and test data. A larger change is split into a sequence of PRs that each leave `main` working.
-- All required checks pass: Lint, Test, Build, Vulnerability scan, Secret scan, and Commit messages.
+- All required checks pass: Lint, Proto, Test, Build, Vulnerability scan, Secret scan, and Commit messages.
 - Merged with **squash merge** only; the branch is deleted automatically.
 
 ## 6. Definition of done
@@ -73,7 +73,8 @@ The `Makefile` is the only entry point for development tasks; `make help` lists 
 | Command | When |
 |---|---|
 | `make setup` | Once after cloning: installs pinned tools and git hooks |
-| `make check` | Before every push: format, lint, tidiness, tests, vulnerability scan |
+| `make check` | Before every push: format, lint, proto lint and breaking-change check, tidiness, tests, vulnerability scan |
+| `make proto` | After changing any `.proto` file: regenerates `gen/` and tidies `go.mod`; commit the result |
 | `make test` | While developing |
 | `make coverage` | To inspect coverage locally |
 | `make secrets` | To scan the full history for secrets |
