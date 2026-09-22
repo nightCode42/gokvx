@@ -463,8 +463,8 @@ Consistent hashing over whole keys destroys prefix locality, which would make `L
 | ID | Phase | Priority | Requirement | Status |
 |---|---|---|---|---|
 | `KV-API-001` | P1 | MUST | All client and inter-node communication **MUST** use gRPC over HTTP/2. No REST, GraphQL, or other client protocol may be exposed. | SPEC |
-| `KV-API-002` | P1 | MUST | The contract **MUST** be defined in versioned Protocol Buffers under `proto/gokvx/v1/`, published as the single source of truth for all consumers, and generated code **MUST** be committed to the repository. | SPEC |
-| `KV-API-003` | P1 | MUST | The build **MUST** enforce backwards compatibility using `buf breaking` against the previous tagged release, and CI **MUST** fail on any breaking change. | SPEC |
+| `KV-API-002` | P1 | MUST | The contract **MUST** be defined in versioned Protocol Buffers under `proto/gokvx/v1/`, published as the single source of truth for all consumers, and generated code **MUST** be committed to the repository. | DONE |
+| `KV-API-003` | P1 | MUST | The build **MUST** enforce backwards compatibility using `buf breaking` against the previous tagged release, and CI **MUST** fail on any breaking change. | DONE |
 | `KV-API-004` | P1 | MUST | Every response **MUST** carry a `ResponseHeader` containing `cluster_id`, `member_id`, `revision`, and `raft_term`. | SPEC |
 | `KV-API-005` | P1 | SHOULD | The server **SHOULD** enable gRPC server reflection when `auth.mode` is `disabled`, and **MUST NOT** enable it otherwise. | SPEC |
 | `KV-API-006` | P1 | MUST | The server **MUST** enforce a configurable maximum concurrent stream count and connection idle timeout, and **MUST** send HTTP/2 keepalive pings on a configurable interval. | SPEC |
@@ -1746,7 +1746,7 @@ message TxnResponse {
 |---|---|---|---|---|
 | `KV-API-080` | P1 | MUST | Enum zero values **MUST** be `*_UNSPECIFIED` or a documented safe default, and the server **MUST** treat an unspecified consistency mode as `LINEARIZABLE` — the safest interpretation, never the cheapest. | SPEC |
 | `KV-API-081` | P1 | MUST | `oneof` **MUST** be used wherever fields are mutually exclusive, so that invalid combinations are unrepresentable rather than merely rejected. | SPEC |
-| `KV-API-082` | P1 | MUST | Field numbers **MUST NOT** be reused. Removed fields **MUST** be `reserved`. | SPEC |
+| `KV-API-082` | P1 | MUST | Field numbers **MUST NOT** be reused. Removed fields **MUST** be `reserved`. | DONE |
 
 ---
 
