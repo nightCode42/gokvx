@@ -8,7 +8,7 @@ What gokvx is, who it is for, and the boundaries that every design decision must
 
 gokvx is a **distributed, strongly consistent key-value store** with a gRPC API, Raft replication, slot-based sharding, MVCC revisions, leases, and streaming watches.
 
-It is built as a **reference implementation**: a system small enough to read end to end, yet complete enough to show how a production-grade distributed store handles consistency, durability, security, observability, and deployment. Its value is measured by two questions:
+It is designed to be **read end to end**: small enough to understand as a whole, yet complete enough to show how a production-grade distributed store handles consistency, durability, security, observability, and deployment. Every design decision is documented, and every consistency claim is backed by tests. Its value is measured by two questions:
 
 1. **Are its claims true?** Linearizability is checked with a model checker under fault injection; durability is checked by killing the process mid-write. A claim without that evidence is not made.
 2. **Can an engineer who did not write it understand it?** Every non-obvious decision is explained in code comments, the handbook, or an ADR.

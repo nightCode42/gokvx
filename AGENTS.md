@@ -6,9 +6,9 @@ This file is the binding working agreement for every contributor — human or AI
 
 ## 1. What this project is
 
-**gokvx is a correctness-first, strongly consistent (CP), sharded key-value store written in Go, built as a public reference implementation.** It exposes a gRPC-only API, replicates state with Raft (`etcd-io/raft`), partitions the key space into fixed slots, and models data with MVCC revisions and streaming watches.
+**gokvx is a correctness-first, strongly consistent (CP), sharded key-value store written in Go. It is designed to be read end to end: every design decision is documented, and every consistency claim is backed by tests.** It exposes a gRPC-only API, replicates state with Raft (`etcd-io/raft`), partitions the key space into fixed slots, and models data with MVCC revisions and streaming watches.
 
-A reference implementation is judged on two things: whether its claims are **provably true**, and whether an experienced engineer can **read it end to end and understand why it is built the way it is**. Every change must preserve, in this order of priority:
+The project is judged on two things: whether its claims are **provably true**, and whether an experienced engineer can **read it end to end and understand why it is built the way it is**. Every change must preserve, in this order of priority:
 
 1. **Correctness** — linearizability, durability, and the invariants in [system-invariants.md](docs/engineering/system-invariants.md). A correctness claim without a test that verifies it is a defect.
 2. **Security** — mutual TLS plus scoped JWT authorization on every request; secure by default, unsafe only by explicit, loud configuration.
