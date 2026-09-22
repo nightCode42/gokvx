@@ -31,7 +31,19 @@ Phase tags mark when a rule becomes binding. Rules without a tag apply from Phas
 
 Source: spec §7.1, `ADR-0004`.
 
-- The **revision** is a 64-bit counter per shard group, incremented **exactly once per committed mutating command** — including no-op writes and whole transactions (`KV-DAT-001`).
+- The **revision** is a 64-bit counter per shard group, incremented **exactly once per committed command that writes at least one key** — a value or a tombstone (`KV-DAT-001`):
+
+| Consumes one revision | Consumes no revision |
+|---|---|
+| `Put`, including one that rewrites the current value, and `Put` with `ignore_value` | Every read: `Get`, `List`, `Watch`, `Status` |
+| `Delete` that removes at least one key | `Delete` that matches no key |
+| `CompareAndSwap` whose comparison holds | `CompareAndSwap` whose comparison fails |
+| `Txn` whose executed branch writes — one revision for the whole transaction | `Txn` whose executed branch writes nothing |
+| `LeaseRevoke`, or lease expiry, that deletes attached keys | `LeaseRevoke` with no attached keys, `LeaseGrant`, `LeaseKeepAlive` |
+| | `Compact` |
+
+- The current revision is persisted explicitly in engine metadata and snapshots, never derived from the key space — compaction and deletion make `max(mod_revision)` unreliable (`KV-DAT-008`).
+- A response to a command that consumed no revision carries the current revision in its header.
 - Each key entry records `create_revision`, `mod_revision`, `version`, `value`, and `lease_id` (`KV-DAT-002`).
   - `version` starts at 1 when a key is created, increments on each write, and resets to 0 on delete.
   - A key recreated after deletion starts a new generation with a new `create_revision`.
@@ -84,7 +96,7 @@ Source: spec §7.3, `ADR-0003`. **The slot function is permanent.** Changing it 
 - The comparison and the write are **one replicated command** — never a read followed by a write.
 - Targets: `VALUE`, `VERSION`, `CREATE_REVISION`, `MOD_REVISION`, `LEASE`. Operators: `EQUAL`, `NOT_EQUAL`, `GREATER`, `LESS`. An `UNSPECIFIED` target or operator fails with `INVALID_ARGUMENT`.
 - `MOD_REVISION EQUAL 0` means "the key does not exist" — create-if-absent.
-- A failed comparison is a **successful RPC** with `succeeded = false` and the current key state. It is never an error.
+- A failed comparison is a **successful RPC** with `succeeded = false` and the current key state. It is never an error, and it consumes no revision (`KV-DAT-001`).
 
 ### List and pagination (`KV-API-020`–`025`)
 

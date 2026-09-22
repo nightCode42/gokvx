@@ -1,0 +1,16 @@
+# buf configuration — https://buf.build/docs/configuration/v2/buf-yaml
+# The wire contract lives in proto/; its package gokvx.v1 maps to proto/gokvx/v1/.
+
+version: v2
+
+modules:
+  - path: proto
+
+lint:
+  use:
+    - STANDARD # naming, packaging, and zero-value rules (KV-API-080)
+    - COMMENTS # every service, RPC, message, field, and enum value is documented
+
+breaking:
+  use:
+    - FILE # strictest level: protects wire format, JSON, and generated Go code (KV-API-003)

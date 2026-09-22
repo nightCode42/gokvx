@@ -1,0 +1,72 @@
+syntax = "proto3";
+
+package gokvx.v1;
+
+import "gokvx/v1/kv.proto";
+
+option go_package = "github.com/nightCode42/gokvx/gen/gokvx/v1;kvv1";
+
+// TxnService executes multi-key transactions within one shard group
+// (spec §8.6, P4).
+service TxnService {
+  // Txn evaluates all comparisons atomically and executes exactly one branch
+  // as a single replicated command (KV-API-050). Requires kv:write if any
+  // operation mutates (KV-SEC-024).
+  rpc Txn(TxnRequest) returns (TxnResponse);
+}
+
+// RequestOp is one operation inside a transaction.
+message RequestOp {
+  // Exactly one operation.
+  oneof request {
+    // A read.
+    GetRequest get = 1;
+    // A write.
+    PutRequest put = 2;
+    // A delete.
+    DeleteRequest delete = 3;
+    // A scan.
+    ListRequest list = 4;
+    // A nested transaction; depth is bounded (KV-API-052).
+    TxnRequest txn = 5;
+  }
+}
+
+// ResponseOp is the result of one RequestOp, in the same position.
+message ResponseOp {
+  // Exactly one result, matching the request.
+  oneof response {
+    // Result of a read.
+    GetResponse get = 1;
+    // Result of a write.
+    PutResponse put = 2;
+    // Result of a delete.
+    DeleteResponse delete = 3;
+    // Result of a scan.
+    ListResponse list = 4;
+    // Result of a nested transaction.
+    TxnResponse txn = 5;
+  }
+}
+
+// TxnRequest is a transaction. All keys must resolve to one shard group
+// (KV-API-051).
+message TxnRequest {
+  // Conditions, all evaluated atomically.
+  repeated Compare compare = 1;
+  // Executed when every condition holds.
+  repeated RequestOp on_success = 2;
+  // Executed when any condition fails.
+  repeated RequestOp on_failure = 3;
+}
+
+// TxnResponse reports which branch ran and its results. All mutations in a
+// transaction share one revision (KV-API-053).
+message TxnResponse {
+  // Response metadata.
+  ResponseHeader header = 1;
+  // Every condition held and on_success ran.
+  bool succeeded = 2;
+  // Results of the executed branch, in order.
+  repeated ResponseOp responses = 3;
+}

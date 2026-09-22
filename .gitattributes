@@ -4,3 +4,6 @@
 *.jpg binary
 *.gif binary
 *.ico binary
+
+# Generated from proto/ by `make proto`; collapsed in diffs, excluded from language stats.
+gen/** linguist-generated=true

@@ -17,7 +17,7 @@ How Go code in gokvx is written. The baseline is [Effective Go](https://go.dev/d
 - `cmd/<binary>` contains only wiring: parse configuration, construct components, run, and shut down. No business logic.
 - `internal/<package>` holds the implementation. Package names are short, lower-case, singular nouns (`storage`, `mvcc`, `shard`) — never `util`, `common`, `helpers`, or `misc`.
 - `pkg/client` is the only public Go API. It depends on generated code and the standard library, never on `internal/` implementation packages.
-- Generated code lives in its own package and is never edited by hand.
+- Generated code lives in `gen/`, is produced only by `make proto`, is committed, and is never edited by hand. CI fails if it is out of date.
 - Layering (spec §6.2) is one-directional:
 
 ```text

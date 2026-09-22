@@ -22,6 +22,12 @@ GOLANGCI_LINT := "$(TOOLS_BIN)/golangci-lint"
 GOVULNCHECK   := "$(TOOLS_BIN)/govulncheck"
 GITLEAKS      := "$(TOOLS_BIN)/gitleaks"
 
+# buf is pinned in tools/go.mod so its large dependency tree stays out of the
+# main module; the protoc plugins are pinned in go.mod, where their versions
+# track the protobuf and gRPC runtimes.
+BUF           := $(GO) tool -modfile=tools/go.mod buf
+GEN_DIR       := gen
+
 # Build info injected at compile time
 VERSION       ?= $(shell git describe --tags --always --dirty 2>/dev/null || echo "dev")
 COMMIT        ?= $(shell git rev-parse --short HEAD 2>/dev/null || echo "unknown")
@@ -35,6 +41,7 @@ LDFLAGS       := -ldflags "-s -w \
 .PHONY: help setup hooks-install hooks-uninstall \
         build run clean \
         test test-race coverage \
+        proto proto-lint proto-breaking proto-check \
         fmt fmt-check lint tidy tidy-check vuln secrets check
 
 # ── Help ────────────────────────────────────────────────────────────────────
@@ -110,6 +117,31 @@ coverage: ## Run tests with coverage and write an HTML report
 	$(GO) tool cover -html=$(COVERAGE_OUT) -o $(COVERAGE_HTML)
 	@$(GO) tool cover -func=$(COVERAGE_OUT) | tail -1
 
+# ── Protobuf ────────────────────────────────────────────────────────────────
+proto: ## Generate Go code from proto/ into gen/ and tidy go.mod
+	$(BUF) generate
+	$(GO) mod tidy
+
+proto-lint: ## Lint the .proto files (naming, zero values, comments)
+	$(BUF) lint
+
+proto-breaking: ## Fail on breaking wire-contract changes since the latest release tag
+	@tag=$$(git describe --tags --abbrev=0 2>/dev/null); \
+	if [ -z "$$tag" ]; then \
+		echo "- No release tag yet: nothing to compare against"; \
+	else \
+		echo "Comparing against $$tag..."; \
+		$(BUF) breaking --against ".git#tag=$$tag"; \
+	fi
+
+proto-check: proto ## Fail if gen/ or go.mod differs from what the .proto files produce
+	@if [ -n "$$(git status --porcelain -- $(GEN_DIR) go.mod go.sum)" ]; then \
+		git status --short -- $(GEN_DIR) go.mod go.sum; \
+		echo "ERROR: generated code is out of date. Run 'make proto' and commit the result."; \
+		exit 1; \
+	fi
+	@echo "- Generated code is up to date"
+
 # ── Quality ─────────────────────────────────────────────────────────────────
 fmt: ## Format code (gofumpt + goimports via golangci-lint)
 	$(GOLANGCI_LINT) fmt
@@ -132,5 +164,5 @@ vuln: ## Scan dependencies for known vulnerabilities
 secrets: ## Scan the full git history for secrets
 	$(GITLEAKS) git --config=.gitleaks.toml --redact --verbose
 
-check: fmt-check lint tidy-check test vuln ## Run every local quality gate (what CI runs)
+check: fmt-check lint proto-lint proto-breaking tidy-check test vuln ## Run every local quality gate (what CI runs)
 	@echo "- All checks passed"
