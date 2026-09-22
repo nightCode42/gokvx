@@ -1428,7 +1428,7 @@ Normative outline. The committed `.proto` files are authoritative for field numb
 ```protobuf
 syntax = "proto3";
 package gokvx.v1;
-option go_package = "github.com/<owner>/gokvx/gen/gokvx/v1;kvv1";
+option go_package = "github.com/nightCode42/gokvx/gen/gokvx/v1;kvv1";
 
 // ---------- common ----------
 

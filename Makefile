@@ -46,7 +46,7 @@ help: ## Show this help message
 setup: ## Install pinned dev tools and git hooks (run once after cloning)
 	@echo "Installing golangci-lint $(GOLANGCI_LINT_VERSION)..."
 	@mkdir -p "$(TOOLS_BIN)"
-	@curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/HEAD/install.sh \
+	@curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/$(GOLANGCI_LINT_VERSION)/install.sh \
 		| sh -s -- -b "$(TOOLS_BIN)" $(GOLANGCI_LINT_VERSION)
 	@echo "Installing govulncheck $(GOVULNCHECK_VERSION)..."
 	$(GO) install golang.org/x/vuln/cmd/govulncheck@$(GOVULNCHECK_VERSION)
