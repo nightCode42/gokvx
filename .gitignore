@@ -28,6 +28,10 @@ crash.log
 # Local data directories
 /data/
 
+# Personal AI assistant settings (shared instructions live in AGENTS.md)
+CLAUDE.local.md
+.claude/settings.local.json
+
 # Editors and OS
 .idea/
 .vscode/
