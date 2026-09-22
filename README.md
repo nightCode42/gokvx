@@ -45,6 +45,9 @@ Every commit is checked by git hooks (formatting, linting, secret scanning, Conv
 ## Documentation
 
 - [Requirements specification](docs/requirements.md) — the full design, phased requirements, and verification strategy
+- [Engineering handbook](docs/engineering/README.md) — code standards, error model, testing, dependencies, and workflow
+- [Architecture decisions](docs/adr/README.md)
+- [Working agreement](AGENTS.md) — the rules every contributor and AI agent follows
 - [Contributing](CONTRIBUTING.md) · [Security policy](SECURITY.md)
 
 ## License

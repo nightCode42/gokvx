@@ -12,9 +12,13 @@ linters:
     - bodyclose
     - contextcheck
     - errorlint
+    - funlen
+    - gocognit
     - gocritic
+    - godot
     - gosec
     - misspell
+    - nestif
     - nilerr
     - noctx
     - revive
@@ -22,13 +26,24 @@ linters:
     - unparam
     - wrapcheck
   settings:
+    # Size and complexity limits: docs/engineering/go-standards.md §5.
+    funlen:
+      lines: 80
+      statements: 50
+      ignore-comments: true
+    gocognit:
+      min-complexity: 20
+    nestif:
+      min-complexity: 5
     misspell:
       locale: US
     wrapcheck:
       # Errors crossing a package boundary must be wrapped (requirements §6.2, A-5).
+      # kverr constructors attach a reason, which counts as wrapping.
       ignore-sig-regexps:
         - fmt\.Errorf\(
         - status\.Error
+        - kverr\.(New|Newf|Wrap)\(
     revive:
       rules:
         - name: exported
@@ -42,6 +57,12 @@ linters:
       - std-error-handling
     paths:
       - gen/
+    rules:
+      # Tests may be long and table-heavy; readability is enforced in review.
+      - path: _test\.go
+        linters:
+          - funlen
+          - gocognit
 
 formatters:
   enable:

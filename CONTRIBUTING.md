@@ -2,6 +2,8 @@
 
 Issues and suggestions are welcome.
 
+Before contributing code, read the [working agreement](AGENTS.md) and the [engineering handbook](docs/engineering/README.md). They define the code standards, error model, testing conventions, and workflow that every change follows.
+
 ## Setup
 
 ```bash
