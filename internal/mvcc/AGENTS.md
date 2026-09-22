@@ -4,7 +4,8 @@ The multi-version store: revision index, historical reads, tombstones, and compa
 
 ## Invariants
 
-- The revision increments **exactly once per committed mutating command** — including no-op writes and whole transactions (`KV-DAT-001`).
+- The revision increments **exactly once per committed command that writes at least one key** (`KV-DAT-001`). A `Put` of an unchanged value consumes one; a failed comparison, a `Delete` matching nothing, and `Compact` consume none. The full table is in system-invariants §3.
+- The current revision is persisted explicitly and never derived from the key space (`KV-DAT-008`).
 - `create_revision`, `mod_revision`, `version`, `value`, and `lease_id` are recorded for every entry (`KV-DAT-002`). `version` starts at 1, increments per write, and resets to 0 on delete.
 - Deletes write tombstones; history is never erased except by compaction (`KV-DAT-003`).
 - A read at revision *R* sees exactly the state after *R* and is unaffected by any later write (`KV-DAT-004`).
@@ -20,3 +21,4 @@ The multi-version store: revision index, historical reads, tombstones, and compa
 
 - Property tests with `rapid` for the `QA-004` invariants: non-decreasing `mod_revision` per key, snapshot isolation of historical reads, and `version` consistent with write history.
 - Compaction boundary cases: reads exactly at, above, and below the compaction revision.
+- A table test covering every row of the revision table in system-invariants §3: which commands advance the revision and which do not.

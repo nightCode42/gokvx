@@ -59,6 +59,7 @@ A change is done when **all** of the following hold:
 - [ ] New behaviour is covered by tests that name their requirement IDs (`QA-071`).
 - [ ] The `Status` of every implemented requirement is updated in `docs/requirements.md` in the same PR (`QA-072`).
 - [ ] Doc comments, package documentation, and the handbook are updated where behaviour or rules changed.
+- [ ] No document contradicts the code: any divergence was presented to the maintainer (`AGENTS.md` §3) and every document restating the affected rule is updated in this PR.
 - [ ] A new design decision is recorded as an ADR.
 - [ ] `docs/WORKLOG.md` reflects the new state and the next step.
 - [ ] No `TODO` without an issue, no commented-out code, no debug output, no unrelated changes.

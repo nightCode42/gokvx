@@ -59,6 +59,17 @@ When sources disagree, the higher one wins. If the conflict is real rather than 
 
 Per-requirement implementation status lives **only** in the `Status` column of `docs/requirements.md` (§3.3 of the spec). No other file restates it.
 
+### Keeping documents and code in agreement
+
+Documents and code must never drift apart. When an implementation cannot, or should not, follow a document exactly — the spec, an ADR, the handbook, a package `AGENTS.md`, or a doc comment — **stop and present the divergence to the maintainer before continuing**:
+
+1. **The conflict** — the document, section or requirement ID, what it says, and what the implementation needs instead.
+2. **Option A: update the document** — the exact wording change and why the implementation is right.
+3. **Option B: change the implementation** — what following the document costs.
+4. **Recommendation** — which option, and the trade-off.
+
+The maintainer decides. The chosen document change lands in the **same pull request** as the code, and every other document that restates the same rule is updated with it, so no stale copy remains. A spec change that alters a `MUST` requirement also gets an ADR (spec, Document Control).
+
 ---
 
 ## 4. Routing table — read before you start
@@ -152,7 +163,7 @@ These are not guidelines. A change that breaks one is not mergeable.
 - Changing the slot function, slot count semantics, or any on-disk format (log records, snapshots, `storage_version`).
 - Adding, removing, or upgrading a dependency beyond a patch release.
 - Weakening any security control, default, or test.
-- Deviating from, or reinterpreting, a requirement — including when the spec looks wrong.
+- Deviating from, or reinterpreting, a requirement or any other document — including when the document looks wrong. Present it as described in §3, "Keeping documents and code in agreement".
 - Resolving an ambiguity in the spec or a conflict between sources of truth.
 - Deleting tests, data, or history, or rewriting published commits.
 

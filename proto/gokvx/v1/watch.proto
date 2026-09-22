@@ -1,0 +1,93 @@
+syntax = "proto3";
+
+package gokvx.v1;
+
+import "gokvx/v1/kv.proto";
+
+option go_package = "github.com/nightCode42/gokvx/gen/gokvx/v1;kvv1";
+
+// WatchService streams changes to keys (spec §8.5).
+service WatchService {
+  // Watch creates and cancels many logical watches over one bidirectional
+  // stream (KV-API-040). Requires kv:watch.
+  rpc Watch(stream WatchRequest) returns (stream WatchResponse);
+}
+
+// WatchRequest either creates or cancels a watch.
+message WatchRequest {
+  // Exactly one action.
+  oneof request {
+    // Create a watch.
+    WatchCreateRequest create = 1;
+    // Cancel a watch.
+    WatchCancelRequest cancel = 2;
+  }
+}
+
+// WatchCreateRequest starts a watch on a key, a range, or a prefix.
+message WatchCreateRequest {
+  // Exactly one selector (KV-API-041, KV-API-081).
+  oneof selector {
+    // A single key.
+    bytes key = 1;
+    // A half-open range of keys.
+    KeyRange range = 2;
+    // Keys starting with this prefix.
+    bytes prefix = 3;
+  }
+  // Replay history from this revision before live events; 0 means live
+  // events only (KV-API-042).
+  int64 start_revision = 4;
+  // Include the previous key-value pair in each event.
+  bool prev_kv = 5;
+  // Send periodic empty responses carrying the current revision.
+  bool progress_notify = 6;
+  // Client-assigned identifier, unique within the stream.
+  int64 watch_id = 7;
+}
+
+// WatchCancelRequest stops a watch.
+message WatchCancelRequest {
+  // The watch to stop.
+  int64 watch_id = 1;
+}
+
+// Event is one change to one key.
+message Event {
+  // Type is the kind of change.
+  enum Type {
+    // Invalid; never sent.
+    TYPE_UNSPECIFIED = 0;
+    // The key was created or updated.
+    TYPE_PUT = 1;
+    // The key was deleted.
+    TYPE_DELETE = 2;
+  }
+  // The kind of change.
+  Type type = 1;
+  // The key after the change; for a delete, the tombstone.
+  KeyValue kv = 2;
+  // The key before the change, when prev_kv was requested.
+  KeyValue prev_kv = 3;
+}
+
+// WatchResponse carries events or a change in a watch's state.
+message WatchResponse {
+  // Response metadata. From P3, header.shard_group identifies the group the
+  // events came from (KV-API-047).
+  ResponseHeader header = 1;
+  // The watch this response belongs to.
+  int64 watch_id = 2;
+  // The watch was created.
+  bool created = 3;
+  // The watch was cancelled; see cancel_reason.
+  bool canceled = 4;
+  // Why the watch was cancelled.
+  string cancel_reason = 5;
+  // Set when the watch was cancelled because start_revision precedes the
+  // compaction point (KV-API-043).
+  int64 compact_revision = 6;
+  // Events, all sharing one revision, so a transaction is observed
+  // atomically (KV-API-044).
+  repeated Event events = 7;
+}

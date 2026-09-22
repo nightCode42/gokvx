@@ -11,9 +11,9 @@ Per-requirement implementation status is **not** tracked here; it lives only in 
 | Item | Value |
 |---|---|
 | Phase | Phase 1 — Durable core |
-| Active branch | `docs/wording-and-pr-checklist` |
-| Active work | Project description wording; PR checklist that fits every change type |
-| Requirement IDs | — (governance; no spec requirement) |
+| Active branch | `feat/proto-contract` |
+| Active work | Wire contract: `.proto` files done; next `buf` configuration, pinned tools, `make proto`, generated code (run by the maintainer), CI checks |
+| Requirement IDs | `KV-API-000`, `KV-API-002`, `KV-API-003`, `KV-API-080`–`082` |
 
 ## Next up
 
@@ -31,5 +31,6 @@ In order. Each item is one branch and one pull request.
 
 ## Hand-off notes
 
+- 2026-09-22 — Wire contract written in `proto/gokvx/v1/` (five files, all phases); compiles and passes `buf` STANDARD lint. Maintainer accepted deviations from Appendix A: separate `TxnService`, `Service` suffix on all services, RPC-named request and response messages, `_seconds` / `_bytes` unit suffixes, reserved field names. Appendix A updated to match. Revision semantics clarified: only commands that write at least one key consume a revision (`KV-DAT-001`); the current revision is persisted explicitly (new `KV-DAT-008`). Spec bumped to 1.1.0. Document–code divergence rule added to `AGENTS.md` §3.
 - 2026-09-22 — Working agreement and handbook merged (#3). Follow-up: the project is described by what it does rather than as a "reference implementation", and the PR checklist separates items for every change from items for requirement work.
 - 2026-09-22 — Repository published. CI, pre-commit hooks, branch ruleset on `main`, CodeQL, Dependabot, and private vulnerability reporting are active. Working agreement and handbook drafted on `docs/engineering-guidelines`.

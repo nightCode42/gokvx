@@ -1,0 +1,90 @@
+syntax = "proto3";
+
+package gokvx.v1;
+
+import "gokvx/v1/kv.proto";
+
+option go_package = "github.com/nightCode42/gokvx/gen/gokvx/v1;kvv1";
+
+// LeaseService manages leases: keys attached to a lease are deleted when it
+// expires or is revoked (spec §8.7, P4).
+service LeaseService {
+  // LeaseGrant creates a lease with a TTL. Requires kv:write.
+  rpc LeaseGrant(LeaseGrantRequest) returns (LeaseGrantResponse);
+  // LeaseRevoke ends a lease and deletes its keys. Requires kv:write.
+  rpc LeaseRevoke(LeaseRevokeRequest) returns (LeaseRevokeResponse);
+  // LeaseKeepAlive renews leases over a bidirectional stream. Requires
+  // kv:write.
+  rpc LeaseKeepAlive(stream LeaseKeepAliveRequest) returns (stream LeaseKeepAliveResponse);
+  // LeaseTimeToLive reports a lease's remaining TTL. Requires
+  // authentication only.
+  rpc LeaseTimeToLive(LeaseTimeToLiveRequest) returns (LeaseTimeToLiveResponse);
+}
+
+// LeaseGrantRequest creates a lease.
+message LeaseGrantRequest {
+  // Requested TTL in seconds.
+  int64 ttl_seconds = 1;
+  // Requested lease ID; 0 means server-assigned.
+  int64 id = 2;
+}
+
+// LeaseGrantResponse returns the new lease.
+message LeaseGrantResponse {
+  // Response metadata.
+  ResponseHeader header = 1;
+  // The lease ID, unique within the cluster (KV-API-060).
+  int64 id = 2;
+  // Granted TTL in seconds; may differ from the request.
+  int64 ttl_seconds = 3;
+}
+
+// LeaseRevokeRequest ends a lease.
+message LeaseRevokeRequest {
+  // The lease to revoke.
+  int64 id = 1;
+}
+
+// LeaseRevokeResponse confirms a revocation.
+message LeaseRevokeResponse {
+  // Response metadata.
+  ResponseHeader header = 1;
+}
+
+// LeaseKeepAliveRequest renews one lease.
+message LeaseKeepAliveRequest {
+  // The lease to renew.
+  int64 id = 1;
+}
+
+// LeaseKeepAliveResponse reports a renewal.
+message LeaseKeepAliveResponse {
+  // Response metadata.
+  ResponseHeader header = 1;
+  // The renewed lease.
+  int64 id = 2;
+  // Granted TTL in seconds; may be lower than requested (KV-API-061).
+  int64 ttl_seconds = 3;
+}
+
+// LeaseTimeToLiveRequest queries a lease.
+message LeaseTimeToLiveRequest {
+  // The lease to query.
+  int64 id = 1;
+  // Also return the keys attached to the lease.
+  bool keys = 2;
+}
+
+// LeaseTimeToLiveResponse reports a lease's state (KV-API-064).
+message LeaseTimeToLiveResponse {
+  // Response metadata.
+  ResponseHeader header = 1;
+  // The lease.
+  int64 id = 2;
+  // Remaining TTL in seconds; -1 if the lease has expired or does not exist.
+  int64 ttl_seconds = 3;
+  // TTL in seconds granted when the lease was created.
+  int64 granted_ttl_seconds = 4;
+  // Keys attached to the lease, when requested.
+  repeated bytes keys = 5;
+}

@@ -1,0 +1,205 @@
+syntax = "proto3";
+
+package gokvx.v1;
+
+import "gokvx/v1/kv.proto";
+
+option go_package = "github.com/nightCode42/gokvx/gen/gokvx/v1;kvv1";
+
+// ClusterService reports and changes cluster state (spec §8.8).
+service ClusterService {
+  // Status reports this node's state (KV-API-070). Requires authentication
+  // only.
+  rpc Status(StatusRequest) returns (StatusResponse);
+  // MemberList reports all members (P2, KV-API-071). Requires authentication
+  // only.
+  rpc MemberList(MemberListRequest) returns (MemberListResponse);
+  // MemberAdd adds a member (P4). Requires kv:admin.
+  rpc MemberAdd(MemberAddRequest) returns (MemberAddResponse);
+  // MemberRemove removes a member (P4). Requires kv:admin.
+  rpc MemberRemove(MemberRemoveRequest) returns (MemberRemoveResponse);
+  // MemberUpdate changes a member's peer URLs (P4). Requires kv:admin.
+  rpc MemberUpdate(MemberUpdateRequest) returns (MemberUpdateResponse);
+  // MemberPromote makes a learner a voter (P4). Requires kv:admin.
+  rpc MemberPromote(MemberPromoteRequest) returns (MemberPromoteResponse);
+  // ShardMap returns the slot-to-group assignment (P3, KV-API-073).
+  // Requires authentication only.
+  rpc ShardMap(ShardMapRequest) returns (ShardMapResponse);
+  // MoveSlots migrates slots to another group (P4). Requires kv:admin.
+  rpc MoveSlots(MoveSlotsRequest) returns (MoveSlotsResponse);
+}
+
+// StatusRequest asks for this node's state.
+message StatusRequest {}
+
+// StatusResponse reports this node's state. Node ID, cluster ID, Raft term,
+// and current revision are in the header.
+message StatusResponse {
+  // Response metadata.
+  ResponseHeader header = 1;
+  // Server version.
+  string version = 2;
+  // Member ID of the current leader; empty when unknown.
+  string leader_id = 3;
+  // Highest Raft log index known to be committed.
+  uint64 committed_index = 4;
+  // Highest Raft log index applied to the state machine.
+  uint64 applied_index = 5;
+  // Size of the database on disk, in bytes.
+  int64 db_size_bytes = 6;
+  // Bytes of the database holding live data.
+  int64 db_size_in_use_bytes = 7;
+}
+
+// Member is one member of a shard group.
+message Member {
+  // Member ID.
+  string id = 1;
+  // Human-readable name.
+  string name = 2;
+  // URLs for peer (Raft) traffic.
+  repeated string peer_urls = 3;
+  // URLs for client traffic.
+  repeated string client_urls = 4;
+  // Non-voting member catching up (P4).
+  bool is_learner = 5;
+  // The shard group the member belongs to.
+  uint32 shard_group = 6;
+}
+
+// MemberListRequest asks for the members of a group.
+message MemberListRequest {
+  // The shard group; 0 in single-group clusters.
+  uint32 shard_group = 1;
+}
+
+// MemberListResponse lists the members of a group.
+message MemberListResponse {
+  // Response metadata.
+  ResponseHeader header = 1;
+  // The members.
+  repeated Member members = 2;
+}
+
+// MemberAddRequest adds a member to a group.
+message MemberAddRequest {
+  // The shard group to join.
+  uint32 shard_group = 1;
+  // URLs for peer traffic to the new member.
+  repeated string peer_urls = 2;
+  // Join as a non-voting learner (KV-CON-041).
+  bool is_learner = 3;
+}
+
+// MemberAddResponse returns the new member and the resulting membership.
+message MemberAddResponse {
+  // Response metadata.
+  ResponseHeader header = 1;
+  // The added member.
+  Member member = 2;
+  // All members after the change.
+  repeated Member members = 3;
+}
+
+// MemberRemoveRequest removes a member.
+message MemberRemoveRequest {
+  // The member to remove.
+  string id = 1;
+}
+
+// MemberRemoveResponse returns the resulting membership.
+message MemberRemoveResponse {
+  // Response metadata.
+  ResponseHeader header = 1;
+  // All members after the change.
+  repeated Member members = 2;
+}
+
+// MemberUpdateRequest changes a member's peer URLs.
+message MemberUpdateRequest {
+  // The member to update.
+  string id = 1;
+  // The new peer URLs.
+  repeated string peer_urls = 2;
+}
+
+// MemberUpdateResponse returns the resulting membership.
+message MemberUpdateResponse {
+  // Response metadata.
+  ResponseHeader header = 1;
+  // All members after the change.
+  repeated Member members = 2;
+}
+
+// MemberPromoteRequest promotes a learner to a voter.
+message MemberPromoteRequest {
+  // The learner to promote.
+  string id = 1;
+}
+
+// MemberPromoteResponse returns the resulting membership.
+message MemberPromoteResponse {
+  // Response metadata.
+  ResponseHeader header = 1;
+  // All members after the change.
+  repeated Member members = 2;
+}
+
+// SlotState is the migration state of a slot range (KV-CON-050).
+enum SlotState {
+  // Invalid; never sent.
+  SLOT_STATE_UNSPECIFIED = 0;
+  // Owned and served by one group.
+  SLOT_STATE_STABLE = 1;
+  // Being copied to target_group; still served by the owner.
+  SLOT_STATE_MIGRATING = 2;
+  // Final hand-over; writes are briefly rejected with a retryable status.
+  SLOT_STATE_HANDOVER = 3;
+}
+
+// SlotRange is a contiguous range of slots and its owner.
+message SlotRange {
+  // First slot, inclusive.
+  uint32 start = 1;
+  // Last slot, inclusive.
+  uint32 end = 2;
+  // The group that owns the range.
+  uint32 shard_group = 3;
+  // The range's migration state.
+  SlotState state = 4;
+  // Destination group while MIGRATING or HANDOVER.
+  uint32 target_group = 5;
+}
+
+// ShardMapRequest asks for the slot map.
+message ShardMapRequest {}
+
+// ShardMapResponse returns the slot map.
+message ShardMapResponse {
+  // Response metadata.
+  ResponseHeader header = 1;
+  // Monotonically increasing slot-map version (KV-CON-030).
+  uint64 version = 2;
+  // Total number of slots; fixed at bootstrap.
+  uint32 slot_count = 3;
+  // The slot ranges, covering every slot exactly once.
+  repeated SlotRange ranges = 4;
+}
+
+// MoveSlotsRequest migrates a slot range to another group.
+message MoveSlotsRequest {
+  // First slot, inclusive.
+  uint32 start = 1;
+  // Last slot, inclusive.
+  uint32 end = 2;
+  // Destination group.
+  uint32 target_group = 3;
+}
+
+// MoveSlotsResponse confirms that a migration started.
+message MoveSlotsResponse {
+  // Response metadata.
+  ResponseHeader header = 1;
+  // Slot-map version recording the migration.
+  uint64 slot_map_version = 2;
+}

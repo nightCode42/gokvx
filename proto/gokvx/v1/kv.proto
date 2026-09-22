@@ -1,0 +1,327 @@
+// Package gokvx.v1 is the gokvx wire contract (spec Appendix A).
+//
+// The contract is defined in full in Phase 1, including every field later
+// phases need (KV-API-000). A field whose behaviour is not yet implemented is
+// accepted and answered with UNIMPLEMENTED and the ErrorInfo reason
+// FEATURE_NOT_IN_CURRENT_PHASE. After the Phase 1 tag no field is added,
+// removed, renumbered, or changed in meaning; removed fields are reserved.
+syntax = "proto3";
+
+package gokvx.v1;
+
+option go_package = "github.com/nightCode42/gokvx/gen/gokvx/v1;kvv1";
+
+// ---------------------------------------------------------------------------
+// Common types, shared by every service.
+// ---------------------------------------------------------------------------
+
+// ResponseHeader is carried by every response (KV-API-004).
+message ResponseHeader {
+  // Identifier of the cluster that produced the response.
+  string cluster_id = 1;
+  // Identifier of the member that produced the response.
+  string member_id = 2;
+  // Store revision at the time the response was produced.
+  int64 revision = 3;
+  // Raft term of the producing member.
+  uint64 raft_term = 4;
+  // Slot-map version, so clients can detect a stale routing cache (P3).
+  uint64 slot_map_version = 5;
+  // Shard group that served the request (P3).
+  uint32 shard_group = 6;
+}
+
+// KeyValue is one key and its MVCC metadata (KV-DAT-002).
+message KeyValue {
+  // The key, an opaque byte string.
+  bytes key = 1;
+  // The value; empty when keys_only was requested.
+  bytes value = 2;
+  // Revision at which the key's current generation was created.
+  int64 create_revision = 3;
+  // Revision of the most recent modification.
+  int64 mod_revision = 4;
+  // Writes to the key since creation, starting at 1.
+  int64 version = 5;
+  // Attached lease, or 0 for none (P4).
+  int64 lease_id = 6;
+}
+
+// Consistency selects how a read is served (KV-API-011, spec §6.4).
+enum Consistency {
+  // Treated as LINEARIZABLE: the safest interpretation (KV-API-080).
+  CONSISTENCY_UNSPECIFIED = 0;
+  // Reflects every write committed before the read began.
+  CONSISTENCY_LINEARIZABLE = 1;
+  // Served from the local replica's applied state; possibly stale.
+  CONSISTENCY_SERIALIZABLE = 2;
+  // Like SERIALIZABLE, optionally bounded below by min_revision.
+  CONSISTENCY_STALE = 3;
+}
+
+// KeyRange is a half-open range of keys, [start, end).
+message KeyRange {
+  // First key in the range, inclusive.
+  bytes start = 1;
+  // Key after the last key in the range, exclusive. A single 0x00 byte means
+  // "to the end of the key space" (KV-API-020).
+  bytes end = 2;
+}
+
+// ---------------------------------------------------------------------------
+// KV service.
+// ---------------------------------------------------------------------------
+
+// KVService provides single-key operations, range scans, conditional writes,
+// and compaction.
+service KVService {
+  // Get reads one key. An absent key returns count = 0, not an error.
+  rpc Get(GetRequest) returns (GetResponse);
+  // Put writes one key and returns the new revision.
+  rpc Put(PutRequest) returns (PutResponse);
+  // Delete removes one key or a range of keys.
+  rpc Delete(DeleteRequest) returns (DeleteResponse);
+  // List scans a prefix or a range, with pagination.
+  rpc List(ListRequest) returns (ListResponse);
+  // CompareAndSwap applies a write only if a comparison holds.
+  rpc CompareAndSwap(CompareAndSwapRequest) returns (CompareAndSwapResponse);
+  // Compact discards history below a revision. Requires kv:admin.
+  rpc Compact(CompactRequest) returns (CompactResponse);
+}
+
+// GetRequest reads one key.
+message GetRequest {
+  // The key to read. Must not be empty.
+  bytes key = 1;
+  // Read consistency; unspecified means LINEARIZABLE.
+  Consistency consistency = 2;
+  // Revision to read at; 0 means the latest.
+  int64 revision = 3;
+  // Omit the value from the response.
+  bool keys_only = 4;
+  // STALE only: fail with FAILED_PRECONDITION if the local applied revision
+  // is lower than this.
+  int64 min_revision = 5;
+}
+
+// GetResponse returns the key, if it exists.
+message GetResponse {
+  // Response metadata.
+  ResponseHeader header = 1;
+  // The key, or empty when it does not exist.
+  repeated KeyValue kvs = 2;
+  // Number of keys found: 0 or 1.
+  int64 count = 3;
+}
+
+// PutRequest writes one key.
+message PutRequest {
+  // The key to write. Must not be empty.
+  bytes key = 1;
+  // The value to write.
+  bytes value = 2;
+  // Lease to attach, or 0 for none (P4).
+  int64 lease_id = 3;
+  // Return the previous key-value pair.
+  bool prev_kv = 4;
+  // Keep the current value and update only the lease; fails if the key
+  // does not exist (KV-API-013).
+  bool ignore_value = 5;
+}
+
+// PutResponse reports the result of a write.
+message PutResponse {
+  // Response metadata; header.revision is the revision of this write.
+  ResponseHeader header = 1;
+  // The previous pair, when prev_kv was set and the key existed.
+  KeyValue prev_kv = 2;
+}
+
+// DeleteRequest removes one key or a range.
+message DeleteRequest {
+  // The key to delete, or the start of the range.
+  bytes key = 1;
+  // Optional end of the range, exclusive. A single 0x00 byte means "to the
+  // end of the key space".
+  bytes range_end = 2;
+  // Return the deleted pairs.
+  bool prev_kv = 3;
+}
+
+// DeleteResponse reports what was deleted.
+message DeleteResponse {
+  // Response metadata.
+  ResponseHeader header = 1;
+  // Number of keys deleted.
+  int64 deleted = 2;
+  // The deleted pairs, when prev_kv was set.
+  repeated KeyValue prev_kvs = 3;
+}
+
+// SortOrder is the direction of a List result.
+enum SortOrder {
+  // Treated as ASCEND.
+  SORT_ORDER_UNSPECIFIED = 0;
+  // Smallest first.
+  SORT_ORDER_ASCEND = 1;
+  // Largest first.
+  SORT_ORDER_DESCEND = 2;
+}
+
+// SortTarget is the field a List result is sorted by.
+enum SortTarget {
+  // Treated as KEY.
+  SORT_TARGET_UNSPECIFIED = 0;
+  // Sort by key.
+  SORT_TARGET_KEY = 1;
+  // Sort by create_revision.
+  SORT_TARGET_CREATE = 2;
+  // Sort by mod_revision.
+  SORT_TARGET_MOD = 3;
+  // Sort by version.
+  SORT_TARGET_VERSION = 4;
+}
+
+// ListRequest scans a prefix or a range (KV-API-020 to KV-API-025).
+message ListRequest {
+  // Exactly one selector (KV-API-081).
+  oneof selector {
+    // Keys starting with this prefix.
+    bytes prefix = 1;
+    // Keys within this half-open range.
+    KeyRange range = 2;
+  }
+  // Former range_end, folded into KeyRange.
+  reserved 3;
+  reserved "range_end";
+  // Maximum number of keys to return; 0 means the server default.
+  int64 limit = 4;
+  // Opaque, integrity-protected token from a previous response.
+  string page_token = 5;
+  // Omit values from the response.
+  bool keys_only = 6;
+  // Return only the count.
+  bool count_only = 7;
+  // Result order; unspecified means ASCEND.
+  SortOrder sort_order = 8;
+  // Field to sort by; unspecified means KEY.
+  SortTarget sort_target = 9;
+  // Read consistency; unspecified means LINEARIZABLE.
+  Consistency consistency = 10;
+  // Revision to read at; 0 means the latest.
+  int64 revision = 11;
+  // Return only keys with mod_revision at or above this; 0 means no bound.
+  int64 min_mod_revision = 12;
+  // Return only keys with mod_revision at or below this; 0 means no bound.
+  int64 max_mod_revision = 13;
+}
+
+// ListResponse returns one page of a scan.
+message ListResponse {
+  // Response metadata.
+  ResponseHeader header = 1;
+  // The keys in this page.
+  repeated KeyValue kvs = 2;
+  // Total number of keys matching the request.
+  int64 count = 3;
+  // Token for the next page; empty when the scan is exhausted.
+  string next_page_token = 4;
+  // More keys remain after this page.
+  bool more = 5;
+  // Number of shard groups queried (P3, KV-API-025).
+  uint32 groups_queried = 6;
+}
+
+// CompareTarget is the key attribute a comparison reads. UNSPECIFIED is
+// rejected with INVALID_ARGUMENT.
+enum CompareTarget {
+  // Invalid; rejected.
+  COMPARE_TARGET_UNSPECIFIED = 0;
+  // The value.
+  COMPARE_TARGET_VALUE = 1;
+  // The version.
+  COMPARE_TARGET_VERSION = 2;
+  // The create_revision.
+  COMPARE_TARGET_CREATE_REVISION = 3;
+  // The mod_revision.
+  COMPARE_TARGET_MOD_REVISION = 4;
+  // The attached lease.
+  COMPARE_TARGET_LEASE = 5;
+}
+
+// CompareResult is the comparison operator. UNSPECIFIED is rejected with
+// INVALID_ARGUMENT.
+enum CompareResult {
+  // Invalid; rejected.
+  COMPARE_RESULT_UNSPECIFIED = 0;
+  // Target equals operand.
+  COMPARE_RESULT_EQUAL = 1;
+  // Target is greater than operand.
+  COMPARE_RESULT_GREATER = 2;
+  // Target is less than operand.
+  COMPARE_RESULT_LESS = 3;
+  // Target differs from operand.
+  COMPARE_RESULT_NOT_EQUAL = 4;
+}
+
+// Compare is a condition on one key (KV-API-031).
+message Compare {
+  // The key to compare.
+  bytes key = 1;
+  // The attribute to compare.
+  CompareTarget target = 2;
+  // The operator.
+  CompareResult result = 3;
+  // The operand; its type must match the target.
+  oneof operand {
+    // Operand for VALUE.
+    bytes value = 4;
+    // Operand for VERSION.
+    int64 version = 5;
+    // Operand for CREATE_REVISION.
+    int64 create_revision = 6;
+    // Operand for MOD_REVISION; 0 with EQUAL means "the key does not
+    // exist" (KV-API-032).
+    int64 mod_revision = 7;
+    // Operand for LEASE.
+    int64 lease_id = 8;
+  }
+}
+
+// CompareAndSwapRequest writes a key if and only if a comparison holds,
+// as one replicated command (KV-API-030).
+message CompareAndSwapRequest {
+  // The condition.
+  Compare compare = 1;
+  // The write to apply when the condition holds; put.prev_kv controls
+  // whether the previous pair is returned.
+  PutRequest put = 2;
+  // Former prev_kv; use put.prev_kv instead.
+  reserved 3;
+  reserved "prev_kv";
+}
+
+// CompareAndSwapResponse reports whether the write was applied. A failed
+// comparison is a successful RPC with succeeded = false (KV-API-033).
+message CompareAndSwapResponse {
+  // Response metadata.
+  ResponseHeader header = 1;
+  // The comparison held and the write was applied.
+  bool succeeded = 2;
+  // The key's current state, so a client can retry without another read.
+  KeyValue current = 3;
+}
+
+// CompactRequest discards history below a revision (KV-DAT-006).
+message CompactRequest {
+  // Revisions below this are discarded.
+  int64 revision = 1;
+  // Wait until the space is physically reclaimed before responding.
+  bool physical = 2;
+}
+
+// CompactResponse confirms a compaction.
+message CompactResponse {
+  // Response metadata.
+  ResponseHeader header = 1;
+}

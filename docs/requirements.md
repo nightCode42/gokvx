@@ -1,9 +1,9 @@
 # gokvx & microservice-1 — System Requirements Specification
 
 **Document ID:** `SRS-GOKVX-001`
-**Version:** 1.0.0
+**Version:** 1.1.0
 **Status:** Draft — living document, revised as implementation proceeds
-**Date:** 2026-09-19
+**Date:** 2026-09-22
 **Applies to:** `gokvx` (distributed key-value store), `microservice-1` (reference consumer)
 **External dependency:** `GoAuthx` (identity provider — specified here as a contract only)
 
@@ -391,7 +391,7 @@ flowchart TB
 
 | Concept | Definition |
 |---|---|
-| **Revision** | A monotonically increasing 64-bit integer, incremented **once per committed mutating command** within a shard group. It is the logical clock of the store. |
+| **Revision** | A monotonically increasing 64-bit integer, incremented **once per committed command that writes at least one key** within a shard group. It is the logical clock of the store. |
 | **`create_revision`** | The revision at which the key's current generation was created. |
 | **`mod_revision`** | The revision of the most recent modification to the key. |
 | **`version`** | A per-generation counter starting at 1 on creation and incremented on each subsequent write. Reset to 0 on delete. |
@@ -414,7 +414,8 @@ flowchart LR
 
 | ID | Phase | Priority | Requirement | Status |
 |---|---|---|---|---|
-| `KV-DAT-001` | P1 | MUST | The store **MUST** maintain a per-shard-group monotonically increasing revision, incremented exactly once per committed mutating command, including no-op writes and transactions. | SPEC |
+| `KV-DAT-001` | P1 | MUST | The store **MUST** maintain a per-shard-group monotonically increasing revision, incremented exactly once per committed command that writes at least one key — a value or a tombstone. A `Put` **MUST** consume a revision even when the new value equals the current one, and a `Put` with `ignore_value` **MUST** consume one. A transaction **MUST** consume at most one revision, and only when its executed branch writes. A command that writes no key **MUST NOT** consume a revision: reads, a failed comparison (`CompareAndSwap` or `Txn`), a `Delete` that matches no key, `Compact`, `LeaseGrant`, `LeaseKeepAlive`, and a `LeaseRevoke` whose lease has no attached keys. | SPEC |
+| `KV-DAT-008` | P1 | MUST | The current revision **MUST** be persisted explicitly in the engine's metadata and in every snapshot, and **MUST NOT** be derived from the key space (for example as the maximum `mod_revision`), which compaction and deletion make unreliable. | SPEC |
 | `KV-DAT-002` | P1 | MUST | Every key entry **MUST** record `create_revision`, `mod_revision`, `version`, `value`, and `lease_id`. | SPEC |
 | `KV-DAT-003` | P1 | MUST | A delete **MUST** write a tombstone at a new revision rather than erasing the key's history. | SPEC |
 | `KV-DAT-004` | P1 | MUST | Read operations **MUST** accept an optional `revision` parameter and serve a consistent historical snapshot at that revision. | SPEC |
@@ -1414,7 +1415,7 @@ A monorepo is used so that the `.proto` contract, both services, the deployment 
 | **PreVote** | A Raft extension in which a node solicits hypothetical votes before incrementing its term, preventing a partitioned node from disrupting a healthy leader. |
 | **Quorum** | A strict majority of a group's voting members, `floor(N/2) + 1`. |
 | **ReadIndex** | A protocol allowing a leader to serve a linearizable read without a log write, by confirming leadership with a heartbeat quorum and waiting for its applied index to reach the confirmed commit index. |
-| **Revision** | The store's monotonic logical clock, incremented once per committed mutation within a shard group. |
+| **Revision** | The store's monotonic logical clock, incremented once per committed command that writes at least one key within a shard group (`KV-DAT-001`). |
 | **Shard group** | An independent Raft group owning a subset of slots. |
 | **Slot** | One of a fixed number of partitions of the key space; the unit of data placement and migration. |
 | **Tombstone** | A marker recording that a key was deleted at a revision, preserving the deletion as an observable event. |
@@ -1423,7 +1424,9 @@ A monorepo is used so that the `.proto` contract, both services, the deployment 
 
 ## Appendix A — Protocol Buffer Contract
 
-Normative outline. The committed `.proto` files are authoritative for field numbers; this appendix fixes the shape, the field set, and the phase in which each becomes functional. Per `KV-API-000`, every message below is defined in Phase 1.
+Normative outline. The committed files in `proto/gokvx/v1/` (`kv.proto`, `watch.proto`, `lease.proto`, `txn.proto`, `cluster.proto`) are authoritative for names, field numbers, and documentation; this appendix fixes the shape, the field set, and the phase in which each becomes functional. Per `KV-API-000`, every message below is defined in Phase 1.
+
+Naming follows the `buf` standard lint rules: service names end in `Service`, and each RPC's request and response messages are named after the RPC. `Txn` is a separate `TxnService` because its operations embed the KV request messages, and keeping it inside `KVService` would make `kv.proto` and `txn.proto` import each other.
 
 ```protobuf
 syntax = "proto3";
@@ -1459,14 +1462,13 @@ enum Consistency {
 
 // ---------- KV ----------
 
-service KV {
-  rpc Get            (GetRequest)    returns (GetResponse);
-  rpc Put            (PutRequest)    returns (PutResponse);
-  rpc Delete         (DeleteRequest) returns (DeleteResponse);
-  rpc List           (ListRequest)   returns (ListResponse);
-  rpc CompareAndSwap (CasRequest)    returns (CasResponse);
-  rpc Compact        (CompactRequest) returns (CompactResponse);
-  rpc Txn            (TxnRequest)    returns (TxnResponse);   // P4
+service KVService {
+  rpc Get            (GetRequest)            returns (GetResponse);
+  rpc Put            (PutRequest)            returns (PutResponse);
+  rpc Delete         (DeleteRequest)         returns (DeleteResponse);
+  rpc List           (ListRequest)           returns (ListResponse);
+  rpc CompareAndSwap (CompareAndSwapRequest) returns (CompareAndSwapResponse);
+  rpc Compact        (CompactRequest)        returns (CompactResponse);
 }
 
 message GetRequest {
@@ -1522,6 +1524,7 @@ message ListRequest {
     KeyRange range  = 2;
   }
   reserved 3;                         // former range_end, folded into KeyRange
+  reserved "range_end";
   int64       limit             = 4;
   string      page_token        = 5;  // opaque, integrity-protected
   bool        keys_only         = 6;
@@ -1564,15 +1567,20 @@ message Compare {
   }
 }
 
-message CasRequest  { Compare compare = 1; PutRequest put = 2; reserved 3; }  // prev_kv lives on PutRequest
-message CasResponse { ResponseHeader header = 1; bool succeeded = 2; KeyValue current = 3; }
+message CompareAndSwapRequest {
+  Compare    compare = 1;
+  PutRequest put     = 2;             // put.prev_kv returns the previous pair
+  reserved 3;
+  reserved "prev_kv";
+}
+message CompareAndSwapResponse { ResponseHeader header = 1; bool succeeded = 2; KeyValue current = 3; }
 
 message CompactRequest  { int64 revision = 1; bool physical = 2; }
 message CompactResponse { ResponseHeader header = 1; }
 
 // ---------- Watch ----------
 
-service Watch { rpc Watch (stream WatchRequest) returns (stream WatchResponse); }
+service WatchService { rpc Watch (stream WatchRequest) returns (stream WatchResponse); }
 
 message WatchCreateRequest {
   oneof selector {                    // KV-API-081: exactly one of key, range, prefix
@@ -1606,16 +1614,20 @@ message WatchResponse {
 
 // ---------- Lease (P4) ----------
 
-service Lease {
-  rpc LeaseGrant      (LeaseGrantRequest)  returns (LeaseGrantResponse);
-  rpc LeaseRevoke     (LeaseRevokeRequest) returns (LeaseRevokeResponse);
+service LeaseService {
+  rpc LeaseGrant      (LeaseGrantRequest)      returns (LeaseGrantResponse);
+  rpc LeaseRevoke     (LeaseRevokeRequest)     returns (LeaseRevokeResponse);
   rpc LeaseKeepAlive  (stream LeaseKeepAliveRequest) returns (stream LeaseKeepAliveResponse);
-  rpc LeaseTimeToLive (LeaseTTLRequest)    returns (LeaseTTLResponse);
+  rpc LeaseTimeToLive (LeaseTimeToLiveRequest) returns (LeaseTimeToLiveResponse);
 }
+
+// ---------- Txn (P4) ----------
+
+service TxnService { rpc Txn (TxnRequest) returns (TxnResponse); }
 
 // ---------- Cluster ----------
 
-service Cluster {
+service ClusterService {
   rpc Status        (StatusRequest)        returns (StatusResponse);
   rpc MemberList    (MemberListRequest)    returns (MemberListResponse);   // P2
   rpc MemberAdd     (MemberAddRequest)     returns (MemberAddResponse);    // P4
@@ -1633,8 +1645,8 @@ message StatusResponse {
   string         leader_id       = 3;
   uint64         committed_index = 4;
   uint64         applied_index   = 5;
-  int64          db_size_bytes   = 6;
-  int64          db_size_in_use  = 7;
+  int64          db_size_bytes        = 6;
+  int64          db_size_in_use_bytes = 7;
 }
 
 message Member {
@@ -1687,13 +1699,13 @@ message LeaseRevokeRequest     { int64 id = 1; }
 message LeaseRevokeResponse    { ResponseHeader header = 1; }
 message LeaseKeepAliveRequest  { int64 id = 1; }
 message LeaseKeepAliveResponse { ResponseHeader header = 1; int64 id = 2; int64 ttl_seconds = 3; }
-message LeaseTTLRequest        { int64 id = 1; bool keys = 2; }
-message LeaseTTLResponse {
-  ResponseHeader header          = 1;
-  int64          id              = 2;
-  int64          ttl_seconds     = 3;  // remaining; -1 if expired or not found
-  int64          granted_ttl     = 4;
-  repeated bytes keys            = 5;
+message LeaseTimeToLiveRequest { int64 id = 1; bool keys = 2; }
+message LeaseTimeToLiveResponse {
+  ResponseHeader header              = 1;
+  int64          id                  = 2;
+  int64          ttl_seconds         = 3;  // remaining; -1 if expired or not found
+  int64          granted_ttl_seconds = 4;
+  repeated bytes keys                = 5;
 }
 
 // ---------- Txn messages (P4) ----------
@@ -1775,7 +1787,7 @@ message TxnResponse {
 | `PERMISSION_DENIED` | `502 Bad Gateway` | **This is a misconfiguration of *our* service account, not a caller error.** Logged at `ERROR` and raised as an alert. It **MUST NOT** be surfaced as `403`, which would wrongly implicate the caller. |
 | `UNAUTHENTICATED` | `503 Service Unavailable` | Triggers one reactive refresh and a single retry (`MS1-SEC-004`). Only if the retry also fails is `503` returned, with `Retry-After`. |
 | `RESOURCE_EXHAUSTED` | `429 Too Many Requests` | `Retry-After` derived from `RetryInfo` |
-| `OK` with `CasResponse.succeeded = false` | `412 Precondition Failed` | Returned for a failed `If-Match` or `If-None-Match: *`. A failed comparison is not a gRPC error (`KV-API-033`). |
+| `OK` with `CompareAndSwapResponse.succeeded = false` | `412 Precondition Failed` | Returned for a failed `If-Match` or `If-None-Match: *`. A failed comparison is not a gRPC error (`KV-API-033`). |
 | `FAILED_PRECONDITION` (not leader, no quorum, stale-read bound unmet) | `503 Service Unavailable` | Distinguished by `ErrorInfo.reason`, not by code alone |
 | `FAILED_PRECONDITION` (`CROSS_SHARD_TXN_UNSUPPORTED`) | `500 Internal Server Error` | Not reachable from the REST API, which issues no `Txn`; mapped defensively |
 | `ABORTED` | `409 Conflict` | — |
@@ -2073,8 +2085,8 @@ The distribution is deliberate. Phase 1 carries most of the requirement count be
 | Field | Value |
 |---|---|
 | Document ID | `SRS-GOKVX-001` |
-| Version | 1.0.0 |
+| Version | 1.1.0 |
 | Status | Draft (living document) |
-| Date | 2026-09-19 |
+| Date | 2026-09-22 |
 | Supersedes | — |
 | Change process | Amendments are made by pull request against `docs/requirements.md`. A change to a `MUST` requirement requires a corresponding ADR. The version is incremented per Semantic Versioning: a breaking change to an existing requirement is a major increment, a new requirement is a minor increment, and a clarification is a patch increment. |
