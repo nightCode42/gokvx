@@ -11,8 +11,8 @@ Per-requirement implementation status is **not** tracked here; it lives only in 
 | Item | Value |
 |---|---|
 | Phase | Phase 1 — Durable core |
-| Active branch | `docs/engineering-guidelines` |
-| Active work | Working agreement (`AGENTS.md`) and engineering handbook |
+| Active branch | `docs/wording-and-pr-checklist` |
+| Active work | Project description wording; PR checklist that fits every change type |
 | Requirement IDs | — (governance; no spec requirement) |
 
 ## Next up
@@ -31,4 +31,5 @@ In order. Each item is one branch and one pull request.
 
 ## Hand-off notes
 
+- 2026-09-22 — Working agreement and handbook merged (#3). Follow-up: the project is described by what it does rather than as a "reference implementation", and the PR checklist separates items for every change from items for requirement work.
 - 2026-09-22 — Repository published. CI, pre-commit hooks, branch ruleset on `main`, CodeQL, Dependabot, and private vulnerability reporting are active. Working agreement and handbook drafted on `docs/engineering-guidelines`.
