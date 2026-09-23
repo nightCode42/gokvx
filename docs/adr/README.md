@@ -20,6 +20,6 @@ Files are named `NNNN-short-title.md` with a four-digit, never-reused number.
 | 0008 | gRPC as the sole client protocol | Planned |
 | 0009 | Single-shard transactions only | Planned |
 | 0010 | Phased delivery and the frozen wire contract | Planned |
-| 0011 | Unified error model | Planned |
+| [0011](0011-unified-error-model.md) | One error type with a registered reason, translated only at the edges | Accepted |
 
-The decisions for ADRs 0001–0010 are summarized in spec §21, and for 0011 in [error-handling.md](../engineering/error-handling.md). Each ADR is written in full before or alongside the first implementation that depends on it, and its status is updated here.
+The decisions for ADRs 0001–0010 are summarized in spec §21. Each ADR is written in full before or alongside the first implementation that depends on it, and its status is updated here.
