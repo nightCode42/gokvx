@@ -30,12 +30,12 @@ Every test that verifies a requirement names it, so the traceability report can 
 ```go
 // TestJWKSRefreshFailureKeepsCache_KV_SEC_012 checks that a failed background
 // refresh leaves the last known good key set in service.
-// Verifies: KV-SEC-012
+// Verifies: KV-SEC-012.
 func TestJWKSRefreshFailureKeepsCache_KV_SEC_012(t *testing.T) { ... }
 ```
 
 - Name: `Test<Subject><Behaviour>_<REQUIREMENT_ID>`, with the ID's hyphens replaced by underscores. The primary requirement goes in the name.
-- A `// Verifies:` line lists every requirement the test covers, comma-separated. This line is what the traceability tooling reads.
+- A `// Verifies:` line lists every requirement the test covers, comma-separated, and ends with a period like every other comment (`godot` enforces it). This line is what the traceability tooling reads.
 - Tests with no requirement (helpers, regressions) omit the suffix but still describe the behaviour: `TestLogRotateKeepsRecordsWhole`.
 - Subtest names are short lower-case phrases describing the case: `t.Run("expired token", ...)`.
 

@@ -1756,9 +1756,9 @@ message TxnResponse {
 
 | ID | Phase | Priority | Requirement | Status |
 |---|---|---|---|---|
-| `KV-API-090` | P1 | MUST | Every error **MUST** return a standard gRPC status code accompanied by a `google.rpc.ErrorInfo` detail with `domain = "gokvx.io"`, a `reason` drawn from a fixed, documented enumeration, and non-sensitive metadata. | SPEC |
-| `KV-API-091` | P1 | MUST | Retryable errors **MUST** include a `google.rpc.RetryInfo` detail so that clients need not guess a backoff. | SPEC |
-| `KV-API-092` | P1 | MUST | The `reason` enumeration **MUST** be documented in `docs/errors.md` and treated as part of the public contract. | SPEC |
+| `KV-API-090` | P1 | MUST | Every error **MUST** return a standard gRPC status code accompanied by a `google.rpc.ErrorInfo` detail with `domain = "gokvx.io"`, a `reason` drawn from a fixed, documented enumeration, and non-sensitive metadata. | WIP |
+| `KV-API-091` | P1 | MUST | Retryable errors **MUST** include a `google.rpc.RetryInfo` detail so that clients need not guess a backoff. | WIP |
+| `KV-API-092` | P1 | MUST | The `reason` enumeration **MUST** be documented in `docs/errors.md` and treated as part of the public contract. | DONE |
 
 | gRPC code | Used when | Retryable |
 |---|---|---|
