@@ -1,0 +1,47 @@
+# Slot of each key with 16384 slots. Format: Go-quoted key, space, slot.
+# Locked by TestSlotGolden_QA_006. Never regenerate without approval.
+"" 0
+"a" 816
+"0" 6880
+"/app/config" 10026
+"/app/config/" 7466
+"key" 13677
+"Key" 3705
+"KEY" 9125
+"123456789" 4739
+"user:1000" 13288
+"users/1" 14811
+"users/2" 2607
+"{tenant-42}/users/1" 12985
+"{tenant-42}/users/2" 12985
+"tenant-42" 12985
+"app/{tenant-42}/settings" 12985
+"{}" 4266
+"{}/x" 12434
+"{}{a}" 11480
+"{" 11367
+"}" 2959
+"{a" 6165
+"a}" 4733
+"}{" 9840
+"a}b{c" 12908
+"a}{b}" 12484
+"{{a}}" 6165
+"{a}{b}" 816
+"{a}" 816
+"{ }" 7567
+"{x}" 8083
+"{long-partition-key-with-many-characters}/suffix" 5048
+"\x00" 4945
+"\xff" 0
+"\x00\x01\x02\x03" 6819
+"\xff\xfe\xfd\xfc" 11931
+"\x00{\xff\x00}\x01" 4945
+"\xc3(" 13735
+"\xc3({k}" 11016
+"ключ" 11182
+"{ключ}/значение" 11182
+"键/值" 14725
+"emoji/🔑" 7909
+"kkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkk" 16209
+"{pppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp}/tail" 3364
