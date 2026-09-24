@@ -438,9 +438,9 @@ Consistent hashing over whole keys destroys prefix locality, which would make `L
 
 | ID | Phase | Priority | Requirement | Status |
 |---|---|---|---|---|
-| `KV-DAT-020` | P1 | MUST | The key space **MUST** be divided into a fixed number of **slots**, configurable at cluster bootstrap and immutable thereafter, defaulting to `16384`. | SPEC |
-| `KV-DAT-021` | P1 | MUST | The slot for a key **MUST** be computed as `crc32c(hash_input) mod slot_count`, where `hash_input` is the substring between the first `{` and the first subsequent `}` if such a non-empty substring exists, and the entire key otherwise. | SPEC |
-| `KV-DAT-022` | P1 | MUST | The slot function **MUST** be implemented and unit-tested in Phase 1 even though a Phase 1 cluster maps all slots to a single group, so that keys written in Phase 1 remain correctly routable after Phase 3. | SPEC |
+| `KV-DAT-020` | P1 | MUST | The key space **MUST** be divided into a fixed number of **slots**, configurable at cluster bootstrap and immutable thereafter, defaulting to `16384`. | WIP |
+| `KV-DAT-021` | P1 | MUST | The slot for a key **MUST** be computed as `crc32c(hash_input) mod slot_count`, where `hash_input` is the substring between the first `{` and the first subsequent `}` if such a non-empty substring exists, and the entire key otherwise. | DONE |
+| `KV-DAT-022` | P1 | MUST | The slot function **MUST** be implemented and unit-tested in Phase 1 even though a Phase 1 cluster maps all slots to a single group, so that keys written in Phase 1 remain correctly routable after Phase 3. | DONE |
 | `KV-DAT-023` | P3 | MUST | Slots **MUST** be assigned to shard groups by an authoritative slot map replicated in the cluster metadata group. | SPEC |
 
 **Worked example.**
@@ -655,7 +655,7 @@ stateDiagram-v2
 flowchart TB
     key["Key: &#123;tenant-42&#125;/users/7"] --> extract["Extract partition key<br/>tenant-42"]
     extract --> hash["crc32c mod 16384"]
-    hash --> slot["Slot 9134"]
+    hash --> slot["Slot N (illustrative)"]
     slot --> map["Slot map<br/>replicated in the metadata group"]
 
     map --> g0["Group 0<br/>slots 0..5460<br/>3 replicas"]
@@ -1243,7 +1243,7 @@ flowchart TB
 | `QA-003` | P1 | MUST | Time-dependent behaviour — token refresh, lease expiry, election timing, backoff — **MUST** be tested with an injected fake clock. Tests **MUST NOT** rely on `time.Sleep` for correctness. | SPEC |
 | `QA-004` | P1 | MUST | Property-based tests **MUST** cover the MVCC store, asserting invariants such as: `mod_revision` is non-decreasing per key; a read at revision *R* is unaffected by writes at revisions greater than *R*; and a key's `version` is consistent with its write history. | SPEC |
 | `QA-005` | P1 | MUST | Fuzz tests **MUST** cover key encoding and decoding, page-token encoding and decoding, and JWT parsing. Any crash found **MUST** be added to the seed corpus. | SPEC |
-| `QA-006` | P1 | MUST | The slot function **MUST** have golden tests fixing its output for a committed set of keys, so that a change to the hash — which would silently misroute all existing data — is impossible to merge accidentally. | SPEC |
+| `QA-006` | P1 | MUST | The slot function **MUST** have golden tests fixing its output for a committed set of keys, so that a change to the hash — which would silently misroute all existing data — is impossible to merge accidentally. | DONE |
 | `QA-007` | P1 | MUST | Table-driven tests **MUST** cover the complete authorization matrix: every method against every scope combination, asserting allow or deny. | SPEC |
 | `QA-008` | P1 | MUST | The JWT verifier **MUST** be tested against a corpus of hostile tokens: `alg: none`, algorithm confusion, missing or unknown `kid`, expired, not-yet-valid, wrong issuer, wrong audience, tampered payload, and oversized tokens. | SPEC |
 
