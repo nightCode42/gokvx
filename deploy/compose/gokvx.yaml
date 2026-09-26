@@ -1,0 +1,30 @@
+# gokvx node configuration for the local Docker Compose stack.
+#
+# Development only: certificates come from `make certs` and tokens from the
+# stub issuer. Never reuse this file or its credentials in a deployed
+# environment (DEP-014).
+#
+# Only settings that differ from the built-in defaults are listed; every key
+# is described in docs/configuration.md. Check this file with:
+#
+#   gokvx config validate --config deploy/compose/gokvx.yaml
+
+node:
+  environment: development
+  data_dir: /var/lib/gokvx
+
+listen:
+  metrics: "0.0.0.0:9100" # scraped by Prometheus inside the Compose network
+
+auth:
+  jwt:
+    issuer_url: "https://stub-issuer:8443/"
+    jwks_url: "https://stub-issuer:8443/.well-known/jwks.json"
+
+tls:
+  allowed_client_sans: ["svc-microservice-1", "svc-benchmark", "svc-observer"]
+
+observability:
+  tracing:
+    otlp_endpoint: "otel-collector:4317"
+    sample_ratio: 1.0 # trace everything locally

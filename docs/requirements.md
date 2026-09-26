@@ -1,9 +1,9 @@
 # gokvx & microservice-1 — System Requirements Specification
 
 **Document ID:** `SRS-GOKVX-001`
-**Version:** 1.1.0
+**Version:** 1.1.1
 **Status:** Draft — living document, revised as implementation proceeds
-**Date:** 2026-09-22
+**Date:** 2026-09-24
 **Applies to:** `gokvx` (distributed key-value store), `microservice-1` (reference consumer)
 **External dependency:** `GoAuthx` (identity provider — specified here as a contract only)
 
@@ -870,15 +870,15 @@ flowchart TB
 
 | ID | Phase | Priority | Requirement | Status |
 |---|---|---|---|---|
-| `KV-CFG-001` | P1 | MUST | Configuration **MUST** be loadable from a YAML file, overridable by environment variables prefixed `GOKVX_`, which are in turn overridable by command-line flags. Precedence: flags > environment > file > defaults. | SPEC |
-| `KV-CFG-002` | P1 | MUST | Configuration **MUST** be validated at startup. Invalid or mutually exclusive settings **MUST** cause a non-zero exit with a message naming the offending key, not a partially initialised process. | SPEC |
-| `KV-CFG-003` | P1 | MUST | A `gokvx config validate` subcommand **MUST** validate a configuration file without starting the server, for use in CI and in Helm pre-install hooks. | SPEC |
-| `KV-CFG-004` | P1 | MUST | The full configuration schema **MUST** be documented in `docs/configuration.md` with types, defaults, and the effect of each setting. [Appendix D](#appendix-d--configuration-reference) is the normative outline. | SPEC |
-| `KV-CFG-005` | P1 | MUST | Secrets **MUST NOT** be accepted as command-line flags. File paths or environment variables **MUST** be used. | SPEC |
-| `KV-CFG-006` | P1 | MUST | The effective configuration **MUST** be logged at startup with all secret-bearing values redacted. | SPEC |
+| `KV-CFG-001` | P1 | MUST | Configuration **MUST** be loadable from a YAML file, overridable by environment variables prefixed `GOKVX_`, which are in turn overridable by command-line flags. Precedence: flags > environment > file > defaults. | DONE |
+| `KV-CFG-002` | P1 | MUST | Configuration **MUST** be validated at startup. Invalid or mutually exclusive settings **MUST** cause a non-zero exit with a message naming the offending key, not a partially initialised process. | DONE |
+| `KV-CFG-003` | P1 | MUST | A `gokvx config validate` subcommand **MUST** validate a configuration file without starting the server, for use in CI and in Helm pre-install hooks. | DONE |
+| `KV-CFG-004` | P1 | MUST | The full configuration schema **MUST** be documented in `docs/configuration.md` with types, defaults, and the effect of each setting. [Appendix D](#appendix-d--configuration-reference) is the normative outline. | DONE |
+| `KV-CFG-005` | P1 | MUST | Secrets **MUST NOT** be accepted as command-line flags. File paths or environment variables **MUST** be used. | DONE |
+| `KV-CFG-006` | P1 | MUST | The effective configuration **MUST** be logged at startup with all secret-bearing values redacted. | WIP |
 | `KV-CFG-010` | P1 | MUST | The process **MUST** handle `SIGTERM` by entering graceful shutdown: report `NOT_SERVING` on readiness, stop accepting new RPCs, allow in-flight unary calls a configurable grace period to complete, close streams with `UNAVAILABLE`, flush observability exporters, and close the engine cleanly. | SPEC |
 | `KV-CFG-011` | P1 | MUST | Graceful shutdown **MUST** complete within a configurable deadline, after which the process exits regardless, and the deadline **MUST** be shorter than the Kubernetes `terminationGracePeriodSeconds`. | SPEC |
-| `KV-CFG-012` | P1 | MUST | The binary **MUST** report version, git commit, build date, and Go version via a `version` subcommand and via a `gokvx_build_info` metric. | SPEC |
+| `KV-CFG-012` | P1 | MUST | The binary **MUST** report version, git commit, build date, and Go version via a `version` subcommand and via a `gokvx_build_info` metric. | WIP |
 | `KV-CFG-013` | P1 | SHOULD | The process **SHOULD** set `GOMEMLIMIT` from its cgroup memory limit and `GOMAXPROCS` from its cgroup CPU quota, so that the Go runtime respects container limits. | SPEC |
 | `KV-CFG-014` | P1 | SHOULD | `net/http/pprof` **SHOULD** be exposed on the private diagnostics listener, never on the public listener, and **SHOULD** be disable-able by configuration. | SPEC |
 
@@ -1921,6 +1921,8 @@ All metrics carry the labels `service`, `node_id`, and `version` by default. Add
 
 Normative outline of the `gokvx` configuration schema. `docs/configuration.md` is the full reference required by `KV-CFG-004`.
 
+Values commented `# example` are deployment-specific illustrations, not defaults: those keys default to empty, so nothing is trusted until it is configured, and validation requires them where they are needed. Every other value is the key's default.
+
 ```yaml
 # ---- identity & lifecycle ----
 node:
@@ -1935,17 +1937,17 @@ listen:
   peer:   "0.0.0.0:2380"            # Raft transport, mTLS
   metrics: "127.0.0.1:9100"         # Prometheus, never public
   diagnostics: "127.0.0.1:6060"     # pprof; disable-able
-advertise:
-  client: "gokvx-0.gokvx-headless.gokvx.svc.cluster.local:2379"
-  peer:   "gokvx-0.gokvx-headless.gokvx.svc.cluster.local:2380"
+advertise:                          # empty means the matching listen address
+  client: "gokvx-0.gokvx-headless.gokvx.svc.cluster.local:2379"  # example
+  peer:   "gokvx-0.gokvx-headless.gokvx.svc.cluster.local:2380"  # example
 
 # ---- security ----
 auth:
   mode: enabled                     # enabled | disabled (see KV-SEC-040..043)
   insecure_allow_remote: false
   jwt:
-    issuer_url: "https://auth.example.com/"
-    jwks_url:   "https://auth.example.com/.well-known/jwks.json"
+    issuer_url: "https://auth.example.com/"                        # example; required when auth is enabled
+    jwks_url:   "https://auth.example.com/.well-known/jwks.json"   # example; required when auth is enabled
     audience:   ["gokvx"]
     algorithms: ["RS256"]
     clock_skew: 60s
@@ -1969,8 +1971,8 @@ tls:
   client_ca_file: /etc/gokvx/tls/client-ca.crt
   peer_ca_file:   /etc/gokvx/tls/peer-ca.crt
   reload: true                      # watch files and hot-swap credentials
-  allowed_peer_sans:  ["spiffe://cluster/ns/gokvx/sa/gokvx", "gokvx-*.gokvx-headless.gokvx.svc.cluster.local"]
-  allowed_client_sans: ["svc-microservice-1", "svc-benchmark", "svc-observer"]
+  allowed_peer_sans:  ["spiffe://cluster/ns/gokvx/sa/gokvx", "gokvx-*.gokvx-headless.gokvx.svc.cluster.local"]  # example; required when peers exist
+  allowed_client_sans: ["svc-microservice-1", "svc-benchmark", "svc-observer"]  # example; required when TLS is enabled
 
 # ---- limits ----
 limits:
@@ -1999,7 +2001,7 @@ storage:
 # ---- cluster ----
 cluster:
   bootstrap: false
-  initial_peers: ["gokvx-0=...:2380", "gokvx-1=...:2380", "gokvx-2=...:2380"]
+  initial_peers: ["gokvx-0=...:2380", "gokvx-1=...:2380", "gokvx-2=...:2380"]  # example
   slot_count: 16384                 # immutable after bootstrap
   groups: 1
   replication_factor: 3
@@ -2009,11 +2011,11 @@ cluster:
     election_ticks: 10              # MUST be >= 10 * heartbeat_ticks
     max_inflight_msgs: 256
     max_size_per_msg: 1048576
-    pre_vote: true
-    check_quorum: true
+    pre_vote: true                  # only true is accepted (KV-CON-005)
+    check_quorum: true              # only true is accepted (KV-CON-006)
     leader_transfer_on_shutdown: true
   read:
-    default_consistency: linearizable
+    default_consistency: linearizable  # only linearizable is accepted (KV-API-080)
     forward_writes_to_leader: true
     leader_wait_timeout: 3s
 
@@ -2031,8 +2033,8 @@ observability:
 
 | ID | Phase | Priority | Requirement | Status |
 |---|---|---|---|---|
-| `KV-CFG-020` | P1 | MUST | Every field in this appendix **MUST** exist with the stated default, and a configuration containing an unrecognised key **MUST** be rejected rather than silently ignored — a typo in a security setting must not degrade silently to the default. | SPEC |
-| `KV-CFG-021` | P1 | MUST | Settings that weaken safety — `auth.mode: disabled`, `tls.enabled: false`, `storage.fsync` other than `always`, `insecure_allow_remote` — **MUST** each produce a distinct startup `WARN` naming the setting and its consequence. | SPEC |
+| `KV-CFG-020` | P1 | MUST | Every field in this appendix **MUST** exist with the stated default, and a configuration containing an unrecognised key **MUST** be rejected rather than silently ignored — a typo in a security setting must not degrade silently to the default. | DONE |
+| `KV-CFG-021` | P1 | MUST | Settings that weaken safety — `auth.mode: disabled`, `tls.enabled: false`, `storage.fsync` other than `always`, `insecure_allow_remote` — **MUST** each produce a distinct startup `WARN` naming the setting and its consequence. | WIP |
 
 ---
 
@@ -2087,8 +2089,8 @@ The distribution is deliberate. Phase 1 carries most of the requirement count be
 | Field | Value |
 |---|---|
 | Document ID | `SRS-GOKVX-001` |
-| Version | 1.1.0 |
+| Version | 1.1.1 |
 | Status | Draft (living document) |
-| Date | 2026-09-22 |
+| Date | 2026-09-24 |
 | Supersedes | — |
 | Change process | Amendments are made by pull request against `docs/requirements.md`. A change to a `MUST` requirement requires a corresponding ADR. The version is incremented per Semantic Versioning: a breaking change to an existing requirement is a major increment, a new requirement is a minor increment, and a clarification is a patch increment. |

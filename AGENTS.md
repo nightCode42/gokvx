@@ -90,7 +90,7 @@ The maintainer decides. The chosen document change lands in the **same pull requ
 | `internal/auth`, TLS, scopes | `internal/auth/AGENTS.md`, spec §11 |
 | `internal/watch` | spec §8.5; system-invariants §Watch |
 | Observability | spec §12, Appendix C |
-| Configuration and lifecycle | spec §13, Appendix D |
+| Configuration and lifecycle | spec §13, Appendix D, [docs/configuration.md](docs/configuration.md) |
 | `microservice-1` | spec §14–15, Appendix B.2 |
 | Deployment | spec §16–17 |
 | A design choice not covered above | `docs/adr/`, then ask |
