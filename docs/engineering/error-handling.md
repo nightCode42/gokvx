@@ -60,7 +60,7 @@ const (
 
 The registry is the single source of truth for every reason's kind, retryability, and description. The complete list is the public catalog in [docs/errors.md](../errors.md) (`KV-API-092`), which an automated test keeps identical to the registry; it is not repeated here.
 
-**Retryable** means that repeating the same request *unchanged*, after a delay, may succeed (`KV-API-091`). Authentication failures are therefore not retryable: the request needs a new credential, which makes it a different request. microservice-1's refresh-and-retry-once behaviour is keyed on the `Unauthenticated` kind instead (`MS1-SEC-004`). A test enforces that only kinds where waiting can help — `ResourceExhausted`, `FailedPrecondition`, `Aborted`, `Unavailable`, `DeadlineExceeded` — contain retryable reasons.
+**Retryable** means that repeating the same request *unchanged*, after a delay, may succeed (`KV-API-091`). Authentication failures are therefore not retryable: the request needs a new credential, which makes it a different request. microservice-1's refresh-and-retry-once behavior is keyed on the `Unauthenticated` kind instead (`MS1-SEC-004`). A test enforces that only kinds where waiting can help — `ResourceExhausted`, `FailedPrecondition`, `Aborted`, `Unavailable`, `DeadlineExceeded` — contain retryable reasons.
 
 ### Construction
 
@@ -103,7 +103,7 @@ Error strings are never compared.
 2. **Create at the origin.** The layer that detects a condition creates the `*kverr.Error`, because only it knows the correct reason.
 3. **Wrap on the way up.** Intermediate layers add context without changing the reason: `return fmt.Errorf("mvcc.Put: %w", err)`. The prefix is `package.Function` so the chain reads as a trace: `server.Put: mvcc.Put: storage.Log.Append: INTERNAL: command log sync failed: fsync /data/0007.log: input/output error`.
 4. **Translate only at the edge.** Only the gRPC transport layer (gokvx) and the HTTP layer (microservice-1) convert errors into wire formats (A-5).
-5. **Log once, at the edge.** A function either handles an error or returns it — never both. The edge logs it with the full cause chain and the request's trace context.
+5. **Log once, at the edge.** A function either handles an error or returns it — never both. The edge logs it with the full cause chain and the request's trace context. A `*kverr.Error` implements `slog.LogValuer`, so logging it — `logger.Error("request failed", "error", err)` — always yields the same group of reason, kind, message, and cause.
 6. **No panics across boundaries.** A panic is a programmer error. The recovery interceptor converts it into `INTERNAL`, logs the stack at `ERROR`, and increments a metric.
 7. **Absence is not an error.** A missing key is `count = 0`; a failed comparison is `succeeded = false` (`KV-API-010`, `KV-API-033`).
 8. **Messages are safe.** Authentication and authorization messages are generic and never reveal which check failed or whether a key exists; the specific cause goes into the error's cause, for the logs (`KV-SEC-030`).
@@ -150,7 +150,7 @@ Log levels at the edge: `KindInternal` → `ERROR`; `KindUnavailable` and `KindD
 
 ## 6. Public client SDK
 
-`internal/kverr` is internal and cannot be imported by external users. The public SDK in `pkg/client` exposes its own exported error type carrying the same `Reason` strings, decoded from `ErrorInfo`. The reason catalogue in `docs/errors.md` is the contract both sides share.
+`internal/kverr` is internal and cannot be imported by external users. The public SDK in `pkg/client` exposes its own exported error type carrying the same `Reason` strings, decoded from `ErrorInfo`. The reason catalog in `docs/errors.md` is the contract both sides share.
 
 ## 7. Why not an HTTP-centric application error
 

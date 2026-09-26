@@ -7,8 +7,8 @@ How Go code in gokvx is written. The baseline is [Effective Go](https://go.dev/d
 ## 1. Principles
 
 1. **Clarity over cleverness.** Code is read far more often than it is written. Prefer the obvious solution, even when it is longer.
-2. **The specification drives the code.** Types, names, and behaviour follow `docs/requirements.md`. When code and spec disagree, the code is wrong or the spec needs an explicit amendment.
-3. **Explicit over implicit.** Dependencies are passed in, not reached for. Behaviour is configured, not inferred.
+2. **The specification drives the code.** Types, names, and behavior follow `docs/requirements.md`. When code and spec disagree, the code is wrong or the spec needs an explicit amendment.
+3. **Explicit over implicit.** Dependencies are passed in, not reached for. Behavior is configured, not inferred.
 4. **Small, focused units.** A package has one responsibility; a function does one thing.
 5. **Make invalid states unrepresentable.** Use types, `oneof`, and constructors so that invalid combinations cannot be built, rather than checking for them everywhere.
 
@@ -51,15 +51,15 @@ Comments exist so that a reader who has never seen the code understands **what**
 | Exported type, constant, variable | A doc comment starting with its name. |
 | Struct field | A comment when its meaning, unit, or invariant is not obvious from its name and type (`// in bytes`, `// guarded by mu`, `// zero means no lease`). |
 | Concurrency | Every type states whether it is safe for concurrent use. Every mutex documents what it guards. |
-| Spec-driven behaviour | A comment citing the requirement ID: `// KV-STO-004: a checksum failure mid-log is fatal.` |
+| Spec-driven behavior | A comment citing the requirement ID: `// KV-STO-004: a checksum failure mid-log is fatal.` |
 
-Test functions are exempt when their name states the behaviour under test; the `// Verifies:` line is still required (see testing.md).
+Test functions are exempt when their name states the behavior under test; the `// Verifies:` line is still required (see testing.md).
 
 ### Style
 
 - Complete sentences, starting with the identifier's name and ending with a period (`godot` enforces the period).
 - Explain **why** inside function bodies; the code already says what. A comment restating the code is noise and is removed.
-- Document behaviour at the edges: what happens with `nil`, empty input, cancellation, and errors.
+- Document behavior at the edges: what happens with `nil`, empty input, cancellation, and errors.
 - Keep comments true. A change that makes a comment wrong updates the comment in the same commit.
 
 ### Not allowed
@@ -130,8 +130,8 @@ Tests are exempt from function length and complexity limits, but a test that is 
 ## 7. Context and cancellation
 
 - `ctx context.Context` is the first parameter of any function that performs I/O, blocks, waits, or crosses a package boundary. It is never stored in a struct.
-- Deadlines and cancellation are honoured promptly: long loops check `ctx.Done()`; blocking operations select on it.
-- A cancelled request never leaves work without an owner — for example a Raft proposal whose caller has gone is still tracked until it commits or is abandoned explicitly (`KV-API-007`).
+- Deadlines and cancellation are honored promptly: long loops check `ctx.Done()`; blocking operations select on it.
+- A canceled request never leaves work without an owner — for example a Raft proposal whose caller has gone is still tracked until it commits or is abandoned explicitly (`KV-API-007`).
 - `context.Background()` appears only in `main`, tests, and long-lived background loops started at construction.
 - Trace context travels in `ctx`; request-scoped values (principal, request ID) use unexported, typed context keys with accessor functions.
 
@@ -156,7 +156,8 @@ Covered in full by [error-handling.md](error-handling.md). In short: one error t
 
 ## 11. Logging, metrics, and tracing
 
-- Logging uses `log/slog` with JSON output. Loggers are passed in, never taken from a global.
+- Logging uses `log/slog` with JSON output, built by `observability.NewLogger`. Loggers are passed in, never taken from a global. Request-scoped fields travel in the context via `observability.WithAttrs` and appear on every record logged with that context; use the `*Context` logging methods.
+- A `config.Config` logs as its redacted form, one attribute per key, so logging a configuration can never leak credentials.
 - Attribute keys are `snake_case` and consistent with spec §12.3 (`trace_id`, `request_id`, `principal`, `method`, `node_id`).
 - Levels: `DEBUG` per request; `INFO` lifecycle and state changes only; `WARN` degraded but serving; `ERROR` needs attention. Log volume must not scale with request volume at `INFO` (`KV-OBS-023`).
 - Metric names, types, and labels come verbatim from spec Appendix C. A new metric is added to Appendix C in the same PR.

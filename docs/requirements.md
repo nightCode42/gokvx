@@ -36,7 +36,7 @@
 23. [Glossary](#23-glossary)
 - [Appendix A — Protocol Buffer Contract](#appendix-a--protocol-buffer-contract)
 - [Appendix B — Error Model and Status Mapping](#appendix-b--error-model-and-status-mapping)
-- [Appendix C — Metrics Catalogue](#appendix-c--metrics-catalogue)
+- [Appendix C — Metrics Catalog](#appendix-c--metrics-catalog)
 - [Appendix D — Configuration Reference](#appendix-d--configuration-reference)
 - [Appendix E — Requirement Index](#appendix-e--requirement-index)
 
@@ -51,7 +51,7 @@ This document is the authoritative requirements baseline for two services:
 - **`gokvx`** — a distributed, strongly consistent key-value store with a gRPC-only API, Raft-replicated state, slot-based sharding, MVCC semantics, leases, and streaming watches.
 - **`microservice-1`** — a deliberately thin REST service whose only purpose is to demonstrate correct, secure service-to-service integration between a consumer, an identity provider, and `gokvx`.
 
-A third service, **`GoAuthx`** (a separate project by the same author), already exists and provides multi-tenant human authentication over REST. It is **out of scope** for this document except as an interface contract (§15): `gokvx` and `microservice-1` are specified against the *behaviour* GoAuthx exposes, not against its internals.
+A third service, **`GoAuthx`** (a separate project by the same author), already exists and provides multi-tenant human authentication over REST. It is **out of scope** for this document except as an interface contract (§15): `gokvx` and `microservice-1` are specified against the *behavior* GoAuthx exposes, not against its internals.
 
 ### 1.2 Design goals
 
@@ -78,7 +78,7 @@ This document is written to be **directly executable as an implementation brief*
 
 - Full functional, distributed, security, observability, and operational requirements for `gokvx`.
 - Full requirements for `microservice-1`.
-- Deployment artefacts for Docker Compose, vanilla Kubernetes (Helm), and Google Kubernetes Engine (GKE) with Terraform-managed infrastructure.
+- Deployment artifacts for Docker Compose, vanilla Kubernetes (Helm), and Google Kubernetes Engine (GKE) with Terraform-managed infrastructure.
 - Test strategy including linearizability verification, fault injection, and benchmarking methodology.
 
 ### 2.2 Explicit non-goals
@@ -154,7 +154,7 @@ Each requirement carries a phase tag `P1`–`P4` indicating the delivery phase i
 
 ## 4. Delivery Phases
 
-The system is delivered in four phases. Each phase produces an **independently deployable, demonstrable, and fully tested artefact**. No phase leaves the system in a partially working state.
+The system is delivered in four phases. Each phase produces an **independently deployable, demonstrable, and fully tested artifact**. No phase leaves the system in a partially working state.
 
 ```mermaid
 flowchart LR
@@ -197,7 +197,7 @@ A phase is complete only when **every** criterion below is satisfied.
 
 ### 4.3 Forward-compatibility rule
 
-> **KV-API-000** `P1` **MUST** — The Protocol Buffer contract in Appendix A **MUST** be defined in full during Phase 1, including every field required by Phases 2–4 (consistency mode, revision bounds, lease identifiers, transaction primitives, shard hints). Fields whose behaviour is not yet implemented **MUST** be accepted and **MUST** return `UNIMPLEMENTED` with a `google.rpc.ErrorInfo` detail carrying `reason = "FEATURE_NOT_IN_CURRENT_PHASE"`. No field may be added, removed, renumbered, or have its semantics changed after the Phase 1 tag.
+> **KV-API-000** `P1` **MUST** — The Protocol Buffer contract in Appendix A **MUST** be defined in full during Phase 1, including every field required by Phases 2–4 (consistency mode, revision bounds, lease identifiers, transaction primitives, shard hints). Fields whose behavior is not yet implemented **MUST** be accepted and **MUST** return `UNIMPLEMENTED` with a `google.rpc.ErrorInfo` detail carrying `reason = "FEATURE_NOT_IN_CURRENT_PHASE"`. No field may be added, removed, renumbered, or have its semantics changed after the Phase 1 tag.
 
 Rationale: a consumer built against Phase 1 must continue to work, unmodified, against Phase 4. This constraint is what makes the phased delivery credible rather than a sequence of rewrites.
 
@@ -468,13 +468,13 @@ Consistent hashing over whole keys destroys prefix locality, which would make `L
 | `KV-API-004` | P1 | MUST | Every response **MUST** carry a `ResponseHeader` containing `cluster_id`, `member_id`, `revision`, and `raft_term`. | SPEC |
 | `KV-API-005` | P1 | SHOULD | The server **SHOULD** enable gRPC server reflection when `auth.mode` is `disabled`, and **MUST NOT** enable it otherwise. | SPEC |
 | `KV-API-006` | P1 | MUST | The server **MUST** enforce a configurable maximum concurrent stream count and connection idle timeout, and **MUST** send HTTP/2 keepalive pings on a configurable interval. | SPEC |
-| `KV-API-007` | P1 | MUST | The server **MUST** honour client deadlines. A request whose context is cancelled **MUST** abort its work promptly and **MUST NOT** leave a proposal in flight without a corresponding cleanup path. | SPEC |
+| `KV-API-007` | P1 | MUST | The server **MUST** honor client deadlines. A request whose context is canceled **MUST** abort its work promptly and **MUST NOT** leave a proposal in flight without a corresponding cleanup path. | SPEC |
 
 ### 8.2 Single-key operations
 
 | ID | Phase | Priority | Requirement | Status |
 |---|---|---|---|---|
-| `KV-API-010` | P1 | MUST | `Get` **MUST** return the value, metadata, and `ResponseHeader` for a key, or a response with `count = 0` when absent. Absence **MUST NOT** be signalled as a gRPC error. | SPEC |
+| `KV-API-010` | P1 | MUST | `Get` **MUST** return the value, metadata, and `ResponseHeader` for a key, or a response with `count = 0` when absent. Absence **MUST NOT** be signaled as a gRPC error. | SPEC |
 | `KV-API-011` | P1 | MUST | `Get` **MUST** support `consistency` ∈ {`LINEARIZABLE` (default), `SERIALIZABLE`, `STALE`}, `revision` for historical reads, and `keys_only` to suppress value transfer. | SPEC |
 | `KV-API-012` | P1 | MUST | `Put` **MUST** write a value and return the new revision, and **MUST** optionally return the previous key-value pair when `prev_kv` is set. | SPEC |
 | `KV-API-013` | P1 | MUST | `Put` **MUST** support `ignore_value`, which updates only the attached lease and leaves the value unchanged, returning `INVALID_ARGUMENT` if the key does not exist. | SPEC |
@@ -542,7 +542,7 @@ Consistent hashing over whole keys destroys prefix locality, which would make `L
 | `KV-API-071` | P2 | MUST | `MemberList` **MUST** report all known members with their peer and client addresses and learner status. | SPEC |
 | `KV-API-072` | P4 | MUST | `MemberAdd`, `MemberRemove`, `MemberUpdate`, and `MemberPromote` **MUST** be exposed and **MUST** require the `kv:admin` scope. | SPEC |
 | `KV-API-073` | P3 | MUST | `ShardMap` **MUST** return the current slot-to-group assignment together with a monotonic slot-map version. | SPEC |
-| `KV-API-074` | P3 | SHOULD | When a request arrives for a slot the node does not own, the server **SHOULD** either transparently forward it or return `FAILED_PRECONDITION` with an `ErrorInfo` carrying the correct group's endpoints, enabling a smart client. The chosen behaviour **MUST** be configurable and documented. | SPEC |
+| `KV-API-074` | P3 | SHOULD | When a request arrives for a slot the node does not own, the server **SHOULD** either transparently forward it or return `FAILED_PRECONDITION` with an `ErrorInfo` carrying the correct group's endpoints, enabling a smart client. The chosen behavior **MUST** be configurable and documented. | SPEC |
 
 ---
 
@@ -614,15 +614,15 @@ flowchart TB
 | `KV-CON-005` | P2 | MUST | The implementation **MUST** enable Raft PreVote to prevent a partitioned node from disrupting a healthy cluster by incrementing its term. | SPEC |
 | `KV-CON-006` | P2 | MUST | The implementation **MUST** enable CheckQuorum so that a leader that has lost contact with a quorum steps down rather than continuing to serve stale linearizable reads. | SPEC |
 | `KV-CON-007` | P2 | MUST | Linearizable reads **MUST** use the ReadIndex protocol. A leader **MUST NOT** serve a linearizable read from local state without confirming leadership via a quorum heartbeat and waiting until `applied_index ≥ read_index`. | SPEC |
-| `KV-CON-008` | P2 | MUST | A write received by a follower **MUST** either be forwarded to the leader or rejected with `FAILED_PRECONDITION` carrying the leader's address. The behaviour **MUST** be configurable and **MUST** default to forwarding. | SPEC |
+| `KV-CON-008` | P2 | MUST | A write received by a follower **MUST** either be forwarded to the leader or rejected with `FAILED_PRECONDITION` carrying the leader's address. The behavior **MUST** be configurable and **MUST** default to forwarding. | SPEC |
 | `KV-CON-009` | P2 | MUST | When no leader is known, the node **MUST** fail requests with `UNAVAILABLE` after a configurable wait, **MUST NOT** block indefinitely, and **MUST** respect the caller's deadline. | SPEC |
 | `KV-CON-010` | P2 | MUST | Every proposal **MUST** carry a unique request identifier so that a retried proposal is applied at most once. The state machine **MUST** maintain a bounded deduplication window and **MUST** document its size and eviction policy. | SPEC |
 | `KV-CON-011` | P2 | MUST | The apply loop **MUST** be single-threaded per group and **MUST** apply entries strictly in index order. | SPEC |
 | `KV-CON-012` | P2 | MUST | The node **MUST** persist Raft `HardState` and new log entries durably **before** sending corresponding messages to peers, as required by the Raft safety argument. | SPEC |
-| `KV-CON-013` | P2 | SHOULD | On graceful shutdown a leader **SHOULD** transfer leadership to the most up-to-date follower before exiting, to minimise unavailability during rolling restarts. | SPEC |
+| `KV-CON-013` | P2 | SHOULD | On graceful shutdown a leader **SHOULD** transfer leadership to the most up-to-date follower before exiting, to minimize unavailability during rolling restarts. | SPEC |
 | `KV-CON-014` | P2 | MUST | The replication factor **MUST** be configurable per shard group. Deployment documentation **MUST** state that a group of size *N* tolerates `floor((N-1)/2)` failures and that even-sized groups are discouraged. | SPEC |
 
-### 10.2 Failover behaviour
+### 10.2 Failover behavior
 
 ```mermaid
 stateDiagram-v2
@@ -697,7 +697,7 @@ flowchart TB
 | `KV-CON-052` | P4 | MUST | During `HANDOVER` the source group **MUST** reject writes for the slot with a retryable status while the tail of changes is applied at the destination, and the window **MUST** be bounded by a configurable timeout after which the migration is aborted and rolled back. | SPEC |
 | `KV-CON-053` | P4 | MUST | A migration **MUST NOT** lose, duplicate, or reorder writes. This **MUST** be verified by a dedicated test running a continuous write workload across a migration. | SPEC |
 | `KV-CON-054` | P4 | MUST | An aborted or crashed migration **MUST** be recoverable to a consistent state on restart, with the slot deterministically owned by exactly one group. | SPEC |
-| `KV-CON-055` | P4 | SHOULD | An advisory rebalancing planner **SHOULD** propose slot moves to equalise key count or byte size across groups, and **MUST** require explicit operator confirmation before executing. | SPEC |
+| `KV-CON-055` | P4 | SHOULD | An advisory rebalancing planner **SHOULD** propose slot moves to equalize key count or byte size across groups, and **MUST** require explicit operator confirmation before executing. | SPEC |
 
 ### 10.6 Deferred: cross-shard transactions
 
@@ -771,7 +771,7 @@ flowchart TB
 | `KV-SEC-021` | P1 | MUST | Scopes **MUST** be read from the `scope` claim as a space-delimited string per OAuth 2.0 convention. A `scopes` array claim **MAY** additionally be accepted. | SPEC |
 | `KV-SEC-022` | P1 | MUST | The defined scopes **MUST** be `kv:read`, `kv:write`, `kv:watch`, and `kv:admin`. `kv:write` **MUST NOT** implicitly grant `kv:read`. | SPEC |
 | `KV-SEC-023` | P1 | MUST | The scope mapping **MUST** be: `Get`, `List` → `kv:read`; `Put`, `Delete`, `CompareAndSwap`, `Txn`, lease operations → `kv:write`; `Watch` → `kv:watch`; `Compact`, member operations, slot-map mutations → `kv:admin`; `Status`, `MemberList`, `ShardMap`, `LeaseTimeToLive`, and health → no scope beyond successful authentication. `MemberAdd`, `MemberRemove`, `MemberUpdate`, `MemberPromote`, and `MoveSlots` → `kv:admin`. | SPEC |
-| `KV-SEC-024` | P1 | MUST | A `Txn` containing any mutating operation **MUST** require `kv:write` even if the executed branch performs only reads. Authorization **MUST** be evaluated against the request's potential effect, not its realised effect. | SPEC |
+| `KV-SEC-024` | P1 | MUST | A `Txn` containing any mutating operation **MUST** require `kv:write` even if the executed branch performs only reads. Authorization **MUST** be evaluated against the request's potential effect, not its realized effect. | SPEC |
 | `KV-SEC-025` | P1 | SHOULD | The system **SHOULD** support optional key-prefix restriction per principal, declared via a `kv_prefixes` claim, denying access to keys outside the permitted prefixes. When the claim is absent, no prefix restriction applies. | SPEC |
 | `KV-SEC-026` | P1 | MUST | For a streaming RPC, authorization **MUST** be evaluated at stream establishment, and the server **MUST** terminate an open stream once the authenticating token's `exp` has passed. A long-lived stream **MUST NOT** outlive its credential. | SPEC |
 
@@ -817,7 +817,7 @@ flowchart TB
 | ID | Phase | Priority | Requirement | Status |
 |---|---|---|---|---|
 | `KV-OBS-010` | P1 | MUST | Prometheus metrics **MUST** be exposed on a dedicated HTTP listener on a separate port from the gRPC API, and that port **MUST NOT** be publicly exposed. | SPEC |
-| `KV-OBS-011` | P1 | MUST | The metrics listed in [Appendix C](#appendix-c--metrics-catalogue) **MUST** be implemented with the stated names, types, and labels. | SPEC |
+| `KV-OBS-011` | P1 | MUST | The metrics listed in [Appendix C](#appendix-c--metrics-catalog) **MUST** be implemented with the stated names, types, and labels. | SPEC |
 | `KV-OBS-012` | P1 | MUST | Latency **MUST** be recorded as histograms with explicitly defined buckets suitable for sub-millisecond to multi-second observation. Summary metrics **MUST NOT** be used for latency, as they cannot be aggregated across instances. | SPEC |
 | `KV-OBS-013` | P1 | MUST | Metric label cardinality **MUST** be bounded. Keys, key prefixes, token subjects with unbounded domain, and raw error strings **MUST NOT** be used as label values. | SPEC |
 | `KV-OBS-014` | P1 | SHOULD | Latency histograms **SHOULD** attach OpenTelemetry exemplars carrying a trace ID, so that a spike in a dashboard links directly to a representative trace. | SPEC |
@@ -827,9 +827,9 @@ flowchart TB
 
 | ID | Phase | Priority | Requirement | Status |
 |---|---|---|---|---|
-| `KV-OBS-020` | P1 | MUST | Logs **MUST** be structured JSON emitted via `log/slog`, written to stdout, with one event per line. | SPEC |
-| `KV-OBS-021` | P1 | MUST | Every log record emitted within a request **MUST** include `trace_id`, `span_id`, `request_id`, `principal`, `method`, and `node_id`. | SPEC |
-| `KV-OBS-022` | P1 | MUST | The log level **MUST** be configurable and **MUST** be changeable at runtime through an authenticated administrative endpoint without a restart. | SPEC |
+| `KV-OBS-020` | P1 | MUST | Logs **MUST** be structured JSON emitted via `log/slog`, written to stdout, with one event per line. | WIP |
+| `KV-OBS-021` | P1 | MUST | Every log record emitted within a request **MUST** include `trace_id`, `span_id`, `request_id`, `principal`, `method`, and `node_id`. | WIP |
+| `KV-OBS-022` | P1 | MUST | The log level **MUST** be configurable and **MUST** be changeable at runtime through an authenticated administrative endpoint without a restart. | WIP |
 | `KV-OBS-023` | P1 | MUST | Log volume **MUST NOT** scale linearly with request volume at the default level. Per-request success logging **MUST** be `DEBUG`; `INFO` is reserved for lifecycle and state-change events. | SPEC |
 | `KV-OBS-024` | P1 | MUST | Raft state transitions, leader changes, snapshot creation and restore, membership changes, compaction, and certificate reloads **MUST** be logged at `INFO` with sufficient context to reconstruct a timeline. | SPEC |
 
@@ -871,7 +871,7 @@ flowchart TB
 | ID | Phase | Priority | Requirement | Status |
 |---|---|---|---|---|
 | `KV-CFG-001` | P1 | MUST | Configuration **MUST** be loadable from a YAML file, overridable by environment variables prefixed `GOKVX_`, which are in turn overridable by command-line flags. Precedence: flags > environment > file > defaults. | DONE |
-| `KV-CFG-002` | P1 | MUST | Configuration **MUST** be validated at startup. Invalid or mutually exclusive settings **MUST** cause a non-zero exit with a message naming the offending key, not a partially initialised process. | DONE |
+| `KV-CFG-002` | P1 | MUST | Configuration **MUST** be validated at startup. Invalid or mutually exclusive settings **MUST** cause a non-zero exit with a message naming the offending key, not a partially initialized process. | DONE |
 | `KV-CFG-003` | P1 | MUST | A `gokvx config validate` subcommand **MUST** validate a configuration file without starting the server, for use in CI and in Helm pre-install hooks. | DONE |
 | `KV-CFG-004` | P1 | MUST | The full configuration schema **MUST** be documented in `docs/configuration.md` with types, defaults, and the effect of each setting. [Appendix D](#appendix-d--configuration-reference) is the normative outline. | DONE |
 | `KV-CFG-005` | P1 | MUST | Secrets **MUST NOT** be accepted as command-line flags. File paths or environment variables **MUST** be used. | DONE |
@@ -935,7 +935,7 @@ sequenceDiagram
 |---|---|---|---|---|
 | `MS1-SEC-001` | P1 | MUST | On startup the service **MUST** obtain a service JWT from GoAuthx over gRPC with mTLS using its own service-account credentials. | SPEC |
 | `MS1-SEC-002` | P1 | MUST | The token **MUST** be held in memory only. It **MUST NOT** be written to disk, logged, included in traces or metrics, or returned in any response. | SPEC |
-| `MS1-SEC-003` | P1 | MUST | The service **MUST** refresh proactively at a configurable fraction of the token's lifetime, defaulting to 50%, with randomised jitter of at least ±10% to prevent synchronised refresh storms across replicas. | SPEC |
+| `MS1-SEC-003` | P1 | MUST | The service **MUST** refresh proactively at a configurable fraction of the token's lifetime, defaulting to 50%, with randomized jitter of at least ±10% to prevent synchronized refresh storms across replicas. | SPEC |
 | `MS1-SEC-004` | P1 | MUST | The service **MUST** additionally refresh reactively on receiving `UNAUTHENTICATED` from `gokvx`, and **MUST** retry the original request exactly once with the new token. It **MUST NOT** retry more than once, and **MUST NOT** retry on `PERMISSION_DENIED`, which indicates a scope misconfiguration rather than an expired credential. | SPEC |
 | `MS1-SEC-005` | P1 | MUST | Concurrent refresh attempts **MUST** be collapsed into a single in-flight request using a single-flight primitive. A burst of failing requests **MUST NOT** produce a burst of token requests to GoAuthx. | SPEC |
 | `MS1-SEC-006` | P1 | MUST | Refresh failures **MUST** be retried with exponential backoff and full jitter, bounded by a configurable maximum interval. A circuit breaker **MUST** prevent sustained hammering of GoAuthx during an outage. | SPEC |
@@ -964,8 +964,8 @@ Base path: `/api/v1`.
 | `MS1-API-001` | P1 | MUST | The key **MUST** be taken from the remainder of the path after `/api/v1/kv/`, permitting slashes within the key. A `key` query parameter carrying a base64url-encoded key **MUST** additionally be supported for keys containing bytes that cannot appear in a path segment, and the two forms **MUST** be mutually exclusive. | SPEC |
 | `MS1-API-002` | P1 | MUST | Keys and values **MUST** be validated against configurable limits before any RPC is issued, rejecting oversized input with `400` and a structured error body. | SPEC |
 | `MS1-API-003` | P1 | MUST | `PUT` **MUST** accept `application/octet-stream` as a raw value and `application/json` as `{"value": "<base64>"}`. The content type **MUST** determine the interpretation, and an unsupported type **MUST** yield `415`. | SPEC |
-| `MS1-API-004` | P1 | MUST | `GET` **MUST** return the value together with `create_revision`, `mod_revision`, `version`, and the cluster revision. It **MUST** set an `ETag` derived from `mod_revision` and **MUST** honour `If-None-Match` with `304`. | SPEC |
-| `MS1-API-005` | P1 | MUST | `PUT` **MUST** honour `If-Match` by translating it into a `CompareAndSwap` on `mod_revision`, returning `412 Precondition Failed` when the comparison fails. `If-None-Match: *` **MUST** translate into create-if-absent. | SPEC |
+| `MS1-API-004` | P1 | MUST | `GET` **MUST** return the value together with `create_revision`, `mod_revision`, `version`, and the cluster revision. It **MUST** set an `ETag` derived from `mod_revision` and **MUST** honor `If-None-Match` with `304`. | SPEC |
+| `MS1-API-005` | P1 | MUST | `PUT` **MUST** honor `If-Match` by translating it into a `CompareAndSwap` on `mod_revision`, returning `412 Precondition Failed` when the comparison fails. `If-None-Match: *` **MUST** translate into create-if-absent. | SPEC |
 | `MS1-API-006` | P1 | MUST | `GET /api/v1/kv` **MUST** require a non-empty `prefix`, **MUST** default `limit` to 100 and cap it at a configurable maximum, and **MUST** return the opaque `next_page_token` returned by `gokvx` unmodified. | SPEC |
 | `MS1-API-007` | P1 | MUST | All error responses **MUST** use a single structured JSON shape containing `code`, `message`, `request_id`, and optionally `details`. Raw gRPC error strings and internal messages **MUST NOT** be surfaced. | SPEC |
 | `MS1-API-008` | P1 | MUST | Status mapping **MUST** follow [Appendix B](#appendix-b--error-model-and-status-mapping) exactly, and **MUST** be covered by a table-driven unit test enumerating every gRPC code. | SPEC |
@@ -992,7 +992,7 @@ Base path: `/api/v1`.
 |---|---|---|---|---|
 | `MS1-OBS-001` | P1 | MUST | OpenTelemetry tracing **MUST** be integrated. Trace context **MUST** be extracted from the inbound HTTP request and injected into the outbound gRPC call, producing one connected trace spanning the REST entry point, token cache lookup, and the `gokvx` operation. | SPEC |
 | `MS1-OBS-002` | P1 | MUST | Token acquisition and refresh **MUST** be traced as their own spans, linked to the triggering request when reactive. | SPEC |
-| `MS1-OBS-003` | P1 | MUST | Prometheus metrics **MUST** include request count, latency histogram, and error count labelled by route template and status class; the outbound gRPC equivalents labelled by method and code; token age, time until expiry, refresh count, and refresh failure count. | SPEC |
+| `MS1-OBS-003` | P1 | MUST | Prometheus metrics **MUST** include request count, latency histogram, and error count labeled by route template and status class; the outbound gRPC equivalents labeled by method and code; token age, time until expiry, refresh count, and refresh failure count. | SPEC |
 | `MS1-OBS-004` | P1 | MUST | Route labels **MUST** use the route template, never the resolved path, to prevent unbounded label cardinality from user-supplied keys. | SPEC |
 | `MS1-OBS-005` | P1 | MUST | Logs **MUST** be structured JSON including `trace_id`, `span_id`, `request_id`, route template, status, and duration. Keys **MUST NOT** be logged at `INFO` or above in the public deployment. | SPEC |
 | `MS1-OBS-006` | P1 | MUST | `/healthz` **MUST** report process liveness only. `/readyz` **MUST** report `200` only when the gRPC channel to `gokvx` is in a usable state and a non-expired token is cached, and `503` with a machine-readable body naming the failing dependency otherwise. | SPEC |
@@ -1017,7 +1017,7 @@ GoAuthx is developed separately. This section defines only what `gokvx` and `mic
 | ID | Phase | Priority | Requirement | Status |
 |---|---|---|---|---|
 | `MS1-SEC-020` | P1 | MUST | The development and test stacks **MUST** be able to run against a contract-conformant **stub issuer** that signs RS256 tokens and serves a JWKS document, so that the two in-scope services can be developed and CI-tested independently of GoAuthx availability. | SPEC |
-| `MS1-SEC-021` | P1 | MUST | A contract test suite **MUST** exist that runs identically against the stub and against a real GoAuthx instance, asserting the claims and behaviours in `AUX-001`–`AUX-007`. | SPEC |
+| `MS1-SEC-021` | P1 | MUST | A contract test suite **MUST** exist that runs identically against the stub and against a real GoAuthx instance, asserting the claims and behaviors in `AUX-001`–`AUX-007`. | SPEC |
 | `KV-SEC-050` | P1 | MUST | `gokvx` integration tests **MUST** use the stub issuer, demonstrating by construction that `gokvx` is provider-agnostic (§5.2, C-1). | SPEC |
 
 ---
@@ -1133,7 +1133,7 @@ flowchart TB
 | `DEP-041` | P1 | MUST | Each chart **MUST** ship a JSON Schema (`values.schema.json`) validating its values, and **MUST** fail rendering with a clear message on invalid input. | SPEC |
 | `DEP-042` | P1 | MUST | Separate values files **MUST** be provided for `dev`, `ci`, and `prod`, and the `prod` file **MUST** enforce authentication enabled, non-`latest` image tags, resource limits set, and replica counts consistent with the PDB. | SPEC |
 | `DEP-043` | P1 | MUST | Charts **MUST** be linted and rendered in CI, and the rendered manifests **MUST** be validated against the Kubernetes API schema and scanned for policy violations. | SPEC |
-| `DEP-044` | P1 | SHOULD | Charts **SHOULD** be published as OCI artefacts to Artifact Registry alongside the images. | SPEC |
+| `DEP-044` | P1 | SHOULD | Charts **SHOULD** be published as OCI artifacts to Artifact Registry alongside the images. | SPEC |
 
 ### 16.6 GKE and infrastructure as code
 
@@ -1149,7 +1149,7 @@ flowchart TB
 | `DEP-057` | P1 | MUST | A documented rollback procedure **MUST** exist and **MUST** be exercised at least once per phase, with the result recorded in the runbook. | SPEC |
 | `DEP-058` | P1 | MUST | A GCP budget with alert thresholds **MUST** be declared in Terraform, and autoscaling maxima **MUST** be capped so that a traffic spike cannot produce unbounded spend. | SPEC |
 | `DEP-059` | P1 | SHOULD | The trade-off between GKE Autopilot and Standard **SHOULD** be recorded in [ADR-0007](#21-architecture-decision-records), including the implications for `StatefulSet` storage classes, `DaemonSet` usage, and cost. | SPEC |
-| `DEP-060` | P1 | SHOULD | A `kind`-based local Kubernetes bring-up (`make kind-up`) **SHOULD** deploy the same charts, so that Kubernetes behaviour is testable without cloud spend. | SPEC |
+| `DEP-060` | P1 | SHOULD | A `kind`-based local Kubernetes bring-up (`make kind-up`) **SHOULD** deploy the same charts, so that Kubernetes behavior is testable without cloud spend. | SPEC |
 
 ---
 
@@ -1203,7 +1203,7 @@ flowchart LR
 
 | ID | Phase | Priority | Requirement | Status |
 |---|---|---|---|---|
-| `DEM-020` | P1 | MUST | The absence of end-user authentication on the `microservice-1` REST API **MUST** be documented explicitly as a deliberate scope decision (§2.2, NG-5), together with the compensating controls in §17.2 and a note that a production deployment would terminate caller authentication at the gateway. An undocumented open endpoint and a documented, deliberately open demonstration endpoint are different engineering artefacts. | SPEC |
+| `DEM-020` | P1 | MUST | The absence of end-user authentication on the `microservice-1` REST API **MUST** be documented explicitly as a deliberate scope decision (§2.2, NG-5), together with the compensating controls in §17.2 and a note that a production deployment would terminate caller authentication at the gateway. An undocumented open endpoint and a documented, deliberately open demonstration endpoint are different engineering artifacts. | SPEC |
 
 ### 17.4 Legal and privacy
 
@@ -1240,7 +1240,7 @@ flowchart TB
 |---|---|---|---|---|
 | `QA-001` | P1 | MUST | Unit tests **MUST** run with `-race` in CI. A data race **MUST** fail the build. | SPEC |
 | `QA-002` | P1 | MUST | Statement coverage (`go test -covermode=atomic`) of non-generated code **MUST** be ≥ 75%; statement coverage of the `consensus`, `storage`, `mvcc`, and `auth` packages **MUST** be ≥ 85%. (Go's toolchain measures statement, not branch, coverage.) Coverage **MUST** be enforced in CI and reported on pull requests. | SPEC |
-| `QA-003` | P1 | MUST | Time-dependent behaviour — token refresh, lease expiry, election timing, backoff — **MUST** be tested with an injected fake clock. Tests **MUST NOT** rely on `time.Sleep` for correctness. | SPEC |
+| `QA-003` | P1 | MUST | Time-dependent behavior — token refresh, lease expiry, election timing, backoff — **MUST** be tested with an injected fake clock. Tests **MUST NOT** rely on `time.Sleep` for correctness. | SPEC |
 | `QA-004` | P1 | MUST | Property-based tests **MUST** cover the MVCC store, asserting invariants such as: `mod_revision` is non-decreasing per key; a read at revision *R* is unaffected by writes at revisions greater than *R*; and a key's `version` is consistent with its write history. | SPEC |
 | `QA-005` | P1 | MUST | Fuzz tests **MUST** cover key encoding and decoding, page-token encoding and decoding, and JWT parsing. Any crash found **MUST** be added to the seed corpus. | SPEC |
 | `QA-006` | P1 | MUST | The slot function **MUST** have golden tests fixing its output for a committed set of keys, so that a change to the hash — which would silently misroute all existing data — is impossible to merge accidentally. | DONE |
@@ -1268,9 +1268,9 @@ This is the primary evidence that the consistency claims in this document are tr
 | `QA-020` | P2 | MUST | A verification harness **MUST** record a history of concurrent client operations with invocation and completion timestamps and check it for linearizability using `anishathalye/porcupine` against a model of the register semantics. | SPEC |
 | `QA-021` | P2 | MUST | Operations whose outcome is unknown — timeouts, connection resets — **MUST** be recorded as indeterminate rather than discarded, since a dropped unknown operation can mask a genuine violation. | SPEC |
 | `QA-022` | P2 | MUST | The harness **MUST** run under the fault scenarios: leader kill (`SIGKILL`), graceful leader stop, network partition isolating the leader, symmetric partition of a minority, process pause (`SIGSTOP`/`SIGCONT`) simulating a long GC pause, clock skew between nodes, and packet loss and latency injection. | SPEC |
-| `QA-023` | P2 | MUST | Any detected violation **MUST** fail the build and **MUST** emit the offending history and a visualisation for post-mortem analysis. | SPEC |
-| `QA-024` | P2 | MUST | The harness **MUST** run on every pull request with a short duration and on a scheduled nightly job with a long duration and a documented number of randomised seeds. Seeds **MUST** be logged so that a failure is reproducible. | SPEC |
-| `QA-025` | P2 | MUST | A dedicated test **MUST** assert that a `STALE` read never returns a revision below a previously observed revision for the same client session, verifying monotonic-read behaviour within a session. | SPEC |
+| `QA-023` | P2 | MUST | Any detected violation **MUST** fail the build and **MUST** emit the offending history and a visualization for post-mortem analysis. | SPEC |
+| `QA-024` | P2 | MUST | The harness **MUST** run on every pull request with a short duration and on a scheduled nightly job with a long duration and a documented number of randomized seeds. Seeds **MUST** be logged so that a failure is reproducible. | SPEC |
+| `QA-025` | P2 | MUST | A dedicated test **MUST** assert that a `STALE` read never returns a revision below a previously observed revision for the same client session, verifying monotonic-read behavior within a session. | SPEC |
 | `QA-026` | P4 | MUST | The harness **MUST** additionally run across a live slot migration (`KV-CON-053`) and across membership changes. | SPEC |
 
 ### 18.5 Benchmarking
@@ -1282,7 +1282,7 @@ This is the primary evidence that the consistency claims in this document are tr
 | `QA-032` | P1 | MUST | Published results **MUST** state the methodology in full: machine type, vCPU, memory, disk type and IOPS, network, replication factor, fsync policy, client concurrency, warm-up duration, measurement duration, and the exact command used. A result without its methodology is not a result. | SPEC |
 | `QA-033` | P2 | SHOULD | The suite **SHOULD** include a comparison against `etcd` under an identical workload and hardware profile, with any configuration differences disclosed. The purpose is calibration, not a marketing claim. | SPEC |
 | `QA-034` | P1 | MUST | The load generator **MUST** measure latency at the client using a coordinated-omission-aware approach: request start times are scheduled against an open-loop target rate, not derived from the completion of the preceding request. | SPEC |
-| `QA-035` | P1 | MUST | Results **MUST** be committed to `docs/benchmarks/` with the raw data, and the headline numbers **MUST** be summarised in the README with a link to the methodology. | SPEC |
+| `QA-035` | P1 | MUST | Results **MUST** be committed to `docs/benchmarks/` with the raw data, and the headline numbers **MUST** be summarized in the README with a link to the methodology. | SPEC |
 | `QA-036` | P2 | SHOULD | A micro-benchmark regression check **SHOULD** run in CI using `benchstat` against the previous commit, flagging significant regressions without hard-failing on noisy hardware. | SPEC |
 
 ---
@@ -1610,7 +1610,7 @@ message WatchResponse {
   bool           created          = 3;
   bool           canceled         = 4;
   string         cancel_reason    = 5;
-  int64          compact_revision = 6;  // set when cancelled due to compaction
+  int64          compact_revision = 6;  // set when canceled due to compaction
   repeated Event events           = 7;  // all events in one message share a revision
 }
 
@@ -1781,7 +1781,7 @@ message TxnResponse {
 
 `MS1-API-008` requires this table to be implemented exactly and covered by a table-driven test.
 
-| gokvx gRPC code | HTTP status | Response behaviour |
+| gokvx gRPC code | HTTP status | Response behavior |
 |---|---|---|
 | `OK` | `200` / `201` / `204` | Per §14.3 |
 | `INVALID_ARGUMENT` | `400 Bad Request` | Caller error; message describes the constraint violated |
@@ -1804,7 +1804,7 @@ message TxnResponse {
 
 ---
 
-## Appendix C — Metrics Catalogue
+## Appendix C — Metrics Catalog
 
 All metrics carry the labels `service`, `node_id`, and `version` by default. Additional labels are listed per metric. Histogram buckets are stated where they are not the client default.
 
@@ -1872,7 +1872,7 @@ All metrics carry the labels `service`, `node_id`, and `version` by default. Add
 |---|---|---|
 | `gokvx_watchers_active` / `gokvx_watch_streams_active` | gauge | — |
 | `gokvx_watch_events_sent_total` | counter | `type` |
-| `gokvx_watch_cancelled_total` | counter | `reason` ∈ {`client`,`compacted`,`slow_consumer`,`token_expired`} |
+| `gokvx_watch_canceled_total` | counter | `reason` ∈ {`client`,`compacted`,`slow_consumer`,`token_expired`} |
 | `gokvx_watch_queue_depth` | histogram | — |
 | `gokvx_leases_active` | gauge | — |
 | `gokvx_lease_expirations_total` / `gokvx_lease_renewals_total` | counter | — |
@@ -2033,7 +2033,7 @@ observability:
 
 | ID | Phase | Priority | Requirement | Status |
 |---|---|---|---|---|
-| `KV-CFG-020` | P1 | MUST | Every field in this appendix **MUST** exist with the stated default, and a configuration containing an unrecognised key **MUST** be rejected rather than silently ignored — a typo in a security setting must not degrade silently to the default. | DONE |
+| `KV-CFG-020` | P1 | MUST | Every field in this appendix **MUST** exist with the stated default, and a configuration containing an unrecognized key **MUST** be rejected rather than silently ignored — a typo in a security setting must not degrade silently to the default. | DONE |
 | `KV-CFG-021` | P1 | MUST | Settings that weaken safety — `auth.mode: disabled`, `tls.enabled: false`, `storage.fsync` other than `always`, `insecure_allow_remote` — **MUST** each produce a distinct startup `WARN` naming the setting and its consequence. | WIP |
 
 ---
@@ -2077,7 +2077,7 @@ The distribution is deliberate. Phase 1 carries most of the requirement count be
 
 | ID | Phase | Priority | Requirement | Status |
 |---|---|---|---|---|
-| `QA-070` | P1 | MUST | Every `MUST` requirement **MUST** be traceable to at least one automated test. A traceability report mapping requirement IDs to test names **MUST** be generated in CI and published as a build artefact. | SPEC |
+| `QA-070` | P1 | MUST | Every `MUST` requirement **MUST** be traceable to at least one automated test. A traceability report mapping requirement IDs to test names **MUST** be generated in CI and published as a build artifact. | SPEC |
 | `QA-071` | P1 | MUST | Tests **MUST** reference the requirement they verify in a structured comment or test name, e.g. `TestJWKSRefreshFailureKeepsCache_KV_SEC_012`, so that the mapping is generated from code rather than maintained by hand. | SPEC |
 | `QA-072` | P1 | MUST | A pull request that implements a requirement **MUST** update that requirement's `Status` field in the same change. | SPEC |
 | `QA-073` | P1 | SHOULD | A requirement that proves unworkable **SHOULD** be marked `WITHDRAWN` with a rationale rather than deleted, preserving the reasoning for future readers. | SPEC |

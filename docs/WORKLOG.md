@@ -11,17 +11,17 @@ Per-requirement implementation status is **not** tracked here; it lives only in 
 | Item | Value |
 |---|---|
 | Phase | Phase 1 — Durable core |
-| Active branch | `feat/config` |
-| Active work | Configuration in `internal/config` and the `gokvx` CLI — complete, awaiting the maintainer's commit and pull request |
-| Requirement IDs | `KV-CFG-001`–`006`, `KV-CFG-012`, `KV-CFG-020`–`021` |
+| Active branch | `feat/logging` |
+| Active work | Structured logging in `internal/observability`, and US spelling across the documentation — complete, awaiting the maintainer's `make proto`, commit, and pull request |
+| Requirement IDs | `KV-OBS-020`–`022`, `KV-CFG-006` |
 
 ## Next up
 
 In order. Each item is one branch and one pull request.
 
-1. **Logging** — `internal/observability` logging: `slog` JSON handler, the standard request fields, level configuration from `observability.log`, redaction rules; a `slog.LogValuer` on `kverr.Error`. At startup, log the redacted effective configuration and each warning, which completes `KV-CFG-006` and `KV-CFG-021`. Spec §12.3.
-2. **Storage engine and command log** — the `Engine` interface over Pebble and the segmented, checksummed `CommandLog`. `KV-STO-000`–`005`.
-3. **Spelling** — settle on US English across the documentation, matching the linter's rule for Go code.
+1. **Storage engine and command log** — the `Engine` interface over Pebble and the segmented, checksummed `CommandLog`, with crash-recovery tests. `KV-STO-000`–`005`, `KV-STO-020`–`021`.
+2. **MVCC store** — revisions, tombstones, historical reads, compaction, property tests. `KV-DAT-001`–`008`, `QA-004`.
+3. **Node startup** — when the server lands: build the logger from `observability.log`, log the effective configuration and each warning at startup, completing `KV-CFG-006`, `KV-CFG-021`, and `KV-OBS-020`–`022`.
 
 ## Open decisions
 
@@ -31,6 +31,7 @@ In order. Each item is one branch and one pull request.
 
 ## Hand-off notes
 
+- 2026-09-26 — Logging added in `internal/observability`: `NewLogger` builds a JSON (or, in development, text) `slog` logger with `node_id` on every record and a `LevelVar` for runtime level changes; `WithAttrs` carries request-scoped fields in the context. `kverr.Error` and `config.Config` implement `slog.LogValuer`, the latter from its redacted copy, so logging a configuration cannot leak URL credentials. Nothing starts a node yet, so `KV-OBS-020`–`022` → `WIP` and `KV-CFG-006`/`021` stay `WIP` until startup logs them. Documentation standardized on US English with the same `misspell` engine golangci-lint uses for Go code (76 fixes; the Appendix C anchor and its two links updated). Two `.proto` comments changed, so `gen/` must be regenerated with `make proto`. Follow-up to consider: run `misspell` on Markdown in pre-commit and CI so British spellings cannot return.
 - 2026-09-24 — Configuration built in `internal/config` with the `gokvx` CLI (`version`, `config validate`). Every key, environment variable, and flag derives from the `Config` struct, so they cannot drift; tests pin the defaults to spec Appendix D and every key to `docs/configuration.md`. Maintainer decisions: environment names use single underscores, proven collision-free by a test; one flag per key; the Appendix D values for advertise addresses, issuer and JWKS URLs, initial peers, and SAN allowlists are examples, so those keys default to empty and validation requires them where needed (Appendix D annotated, spec 1.1.1); `pre_vote`, `check_quorum`, and `default_consistency` accept only the value their MUST requirement mandates. Variables Kubernetes injects for Services (`GOKVX_*_SERVICE_HOST`, `GOKVX_*_PORT_*`) are ignored rather than rejected, which would otherwise crash every pod; the Helm chart should also set `enableServiceLinks: false`. `mapstructure` stayed indirect: unknown keys are found by comparing loaded keys with the struct, so no allowlist change beyond naming `pflag` next to Cobra. Unknown keys are reported before the value rules, because rules cannot run on unknown values. `KV-CFG-001`–`005` and `KV-CFG-020` → `DONE`; `KV-CFG-006` and `KV-CFG-021` → `WIP` until startup logging exists; `KV-CFG-012` → `WIP` until the `gokvx_build_info` metric. `KV-SEC-041`/`042` rules are enforced by validation but stay `SPEC` until a node actually starts.
 - 2026-09-24 — Slot function built in `internal/shard`: `NewSlotter` validates the slot count once (zero fails with `INVALID_ARGUMENT`), `Slotter.Slot` is check-free and allocation-free, `HashInput` applies the brace rule without copying. Maintainer decisions: a positive count is a constructor precondition rather than a per-call check; a `Slotter` type instead of a bare function. The hash is anchored to published CRC32C values (check value and RFC 3720 vectors), 45 golden keys are locked in `testdata/slots.golden`, and a 45-second fuzz run (1.65M inputs) found no failures. `KV-DAT-021`, `KV-DAT-022`, `QA-006` → `DONE`; `KV-DAT-020` → `WIP` until the cluster configuration fixes the count at bootstrap.
 - 2026-09-23 — Error model built in `internal/kverr` (ADR-0011): 14 kinds (`KindCanceled` added to cover the edge's `context.Canceled` mapping), 21 registered reasons, unexported fields with copying accessors, `New`/`Newf`/`Wrap`, `With*` copy methods, `ReasonOf`, six sentinels. Maintainer decisions: unexported fields; an empty message defaults to the reason's description; `RetryAfter` is set by the caller, with no per-reason defaults. Authentication reasons are deliberately not retryable (a new credential makes a different request). `docs/errors.md` published and pinned to the registry by `TestErrorCatalogMatchesRegistry_KV_API_092`. `KV-API-092` → `DONE`; `KV-API-090` and `KV-API-091` → `WIP` until the server's gRPC edge attaches `ErrorInfo` and `RetryInfo`. Handbook `error-handling.md` updated to match; its duplicate reason table removed in favor of the catalog. `stretchr/testify` added (on the allowlist).

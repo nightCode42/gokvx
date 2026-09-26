@@ -15,7 +15,7 @@ The `Engine` interface with its Pebble implementation, and the file-backed `Comm
 ## Stop and ask before
 
 - Changing the record format, segment naming, snapshot layout, or `storage_version` semantics. On-disk formats are permanent once released.
-- Changing fsync behaviour or the order of any write, fsync, or rename.
+- Changing fsync behavior or the order of any write, fsync, or rename.
 
 ## Required tests
 

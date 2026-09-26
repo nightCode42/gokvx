@@ -1,6 +1,7 @@
 package config
 
 import (
+	"log/slog"
 	"net/url"
 	"reflect"
 	"slices"
@@ -77,6 +78,23 @@ func (c *Config) Redacted() Config {
 	r.Auth.JWT.JWKSURL = redactURL(r.Auth.JWT.JWKSURL)
 	r.Observability.Tracing.OTLPEndpoint = redactURL(r.Observability.Tracing.OTLPEndpoint)
 	return r
+}
+
+// LogValue renders the configuration for structured logs as one attribute
+// per key, from the redacted copy, so logging a configuration can never leak
+// credentials embedded in URLs (KV-CFG-006). It has a value receiver so that
+// logging a Config by value redacts too.
+func (c Config) LogValue() slog.Value {
+	redacted := c.Redacted()
+	attrs := make([]slog.Attr, 0, len(fields))
+	for _, f := range fields {
+		value := f.valueOf(&redacted).Interface()
+		if f.typ == durationType {
+			value = formatDuration(value.(time.Duration))
+		}
+		attrs = append(attrs, slog.Any(f.key, value))
+	}
+	return slog.GroupValue(attrs...)
 }
 
 // clone returns a copy of the configuration whose lists are copies too.

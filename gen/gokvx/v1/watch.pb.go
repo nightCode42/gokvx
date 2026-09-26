@@ -422,11 +422,11 @@ type WatchResponse struct {
 	WatchId int64 `protobuf:"varint,2,opt,name=watch_id,json=watchId,proto3" json:"watch_id,omitempty"`
 	// The watch was created.
 	Created bool `protobuf:"varint,3,opt,name=created,proto3" json:"created,omitempty"`
-	// The watch was cancelled; see cancel_reason.
+	// The watch was canceled; see cancel_reason.
 	Canceled bool `protobuf:"varint,4,opt,name=canceled,proto3" json:"canceled,omitempty"`
-	// Why the watch was cancelled.
+	// Why the watch was canceled.
 	CancelReason string `protobuf:"bytes,5,opt,name=cancel_reason,json=cancelReason,proto3" json:"cancel_reason,omitempty"`
-	// Set when the watch was cancelled because start_revision precedes the
+	// Set when the watch was canceled because start_revision precedes the
 	// compaction point (KV-API-043).
 	CompactRevision int64 `protobuf:"varint,6,opt,name=compact_revision,json=compactRevision,proto3" json:"compact_revision,omitempty"`
 	// Events, all sharing one revision, so a transaction is observed

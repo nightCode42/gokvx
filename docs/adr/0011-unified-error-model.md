@@ -34,7 +34,7 @@ The question is what error representation lets every layer report failures consi
 Chosen option: **one error type with a registered reason, translated only at the edges** (option 1), implemented as `internal/kverr`:
 
 - `*kverr.Error` carries a `Reason` — a stable, upper-snake-case string that is part of the public contract — plus a client-safe message, optional non-sensitive metadata, field violations, a retry hint, and an optional cause.
-- A single registry maps each reason to its `Kind` and retryability. The kind, which decides the gRPC code, is derived from the reason, so the two can never disagree. An unregistered reason is replaced by `INTERNAL`, so only catalogued reasons reach clients.
+- A single registry maps each reason to its `Kind` and retryability. The kind, which decides the gRPC code, is derived from the reason, so the two can never disagree. An unregistered reason is replaced by `INTERNAL`, so only cataloged reasons reach clients.
 - The type's fields are unexported: errors are built only by `New`, `Newf`, and `Wrap`, and are immutable — `With*` methods return copies. This makes sentinel errors genuinely constant.
 - Functions return the `error` interface, never `*kverr.Error`, which avoids the typed-nil trap.
 - Only the gRPC edge in gokvx and the HTTP edge in microservice-1 translate errors into wire formats, each through one function covered by a table-driven test.

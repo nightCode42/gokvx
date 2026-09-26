@@ -19,6 +19,6 @@ The Raft node (Phase 2+): storage for the Raft log, the peer transport, the tick
 
 ## Required tests
 
-- Failover, catch-up by log and by snapshot, and no-leader behaviour (`KV-CON-020`–`023`).
+- Failover, catch-up by log and by snapshot, and no-leader behavior (`KV-CON-020`–`023`).
 - The linearizability harness under every fault scenario in `QA-022`, with zero violations.
 - Election timing driven by a fake clock, never by real time.

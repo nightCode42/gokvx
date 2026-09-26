@@ -13,7 +13,7 @@ The slot function, the slot map, and request routing. The slot function decides 
 ## Stop and ask before
 
 - **Any** change to the slot function, its hash, the brace rule, or the default slot count. A change would silently misroute every existing key.
-- Changing golden test data. A golden-file diff is a behaviour change, not a test fix.
+- Changing golden test data. A golden-file diff is a behavior change, not a test fix.
 
 ## Required tests
 

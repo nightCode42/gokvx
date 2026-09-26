@@ -134,6 +134,24 @@ func TestRedactedSharesNoLists(t *testing.T) {
 	assert.Equal(t, "svc-microservice-1", cfg.TLS.AllowedClientSANs[0])
 }
 
+// TestLogValueIsRedacted_KV_CFG_006 checks that the log form of a
+// configuration has one attribute per key and never carries URL credentials.
+// Verifies: KV-CFG-006.
+func TestLogValueIsRedacted_KV_CFG_006(t *testing.T) {
+	t.Parallel()
+
+	cfg := validConfig()
+	cfg.Auth.JWT.IssuerURL = "https://client:s3cret@issuer.test/"
+
+	value := cfg.LogValue()
+
+	assert.NotContains(t, value.String(), "s3cret")
+	attrs := value.Group()
+	require.NotEmpty(t, attrs)
+	assert.Equal(t, "node.id", attrs[0].Key)
+	assert.Equal(t, "gokvx-0", attrs[0].Value.String())
+}
+
 // TestYAMLRoundTrip checks that rendered YAML loads back to the same
 // configuration, so the output of `gokvx config validate --print` is itself a
 // valid configuration file.

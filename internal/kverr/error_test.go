@@ -112,6 +112,24 @@ func TestAccessorsReturnCopies(t *testing.T) {
 	assert.Equal(t, "put.key", err.Violations()[0].Field)
 }
 
+// TestLogValue checks the structured form of an error in logs, with and
+// without a cause, and for a typed nil.
+func TestLogValue(t *testing.T) {
+	t.Parallel()
+
+	withCause := kverr.Wrap(kverr.ReasonNoLeader, errors.New("dial timeout"), "no leader in time")
+	withoutCause := kverr.New(kverr.ReasonKeyEmpty, "")
+	var typedNil *kverr.Error
+
+	assert.Equal(t,
+		"[reason=NO_LEADER kind=UNAVAILABLE message=no leader in time cause=dial timeout]",
+		withCause.LogValue().String())
+	assert.Equal(t,
+		"[reason=KEY_EMPTY kind=INVALID_ARGUMENT message=The key is empty, which is only valid as a range boundary.]",
+		withoutCause.LogValue().String())
+	assert.Equal(t, "<nil>", typedNil.LogValue().String())
+}
+
 // TestAccessorsOfPlainErrorAreEmpty checks the zero state of the optional
 // parts of an error.
 func TestAccessorsOfPlainErrorAreEmpty(t *testing.T) {
