@@ -29,8 +29,8 @@ Every third-party module is a long-term commitment: code we run but did not writ
 | Resilience | `golang.org/x/sync` | `errgroup` for goroutine lifecycles; `singleflight` for token refresh (`MS1-SEC-005`) |
 | Resilience | `github.com/sony/gobreaker/v2` | Circuit breakers in microservice-1 (`MS1-SEC-006`, `MS1-API-026`) |
 | Caching | `github.com/hashicorp/golang-lru/v2` | Bounded, expiring verified-claims cache (`KV-SEC-017`) |
-| Configuration | `github.com/knadh/koanf/v2` with its `file`, `env`, `posflag` providers and `yaml` parser | Layered configuration: file, environment, flags (`KV-CFG-001`) |
-| CLI | `github.com/spf13/cobra` | Command structure and shell completion for `gokvx`, `gokvxctl`, `kvbench`, `kvcheck` |
+| Configuration | `github.com/knadh/koanf/v2` with its `file` provider and `yaml` parser | Layered configuration: file, environment, flags (`KV-CFG-001`) |
+| CLI | `github.com/spf13/cobra`, with its flag library `github.com/spf13/pflag` | Command structure and shell completion for `gokvx`, `gokvxctl`, `kvbench`, `kvcheck`; one flag per configuration key |
 | Observability | `go.opentelemetry.io/otel` and its SDK, OTLP exporter, and `otelgrpc` / `otelhttp` instrumentation | Distributed tracing (`KV-OBS-001`–`007`) |
 | Observability | `github.com/prometheus/client_golang` | Metrics and exemplars (`KV-OBS-010`–`015`) |
 | TUI | `charm.land/bubbletea/v2`, `charm.land/lipgloss/v2` | Cluster dashboard in `gokvxctl` (`KV-OPS-001`–`007`) |
@@ -72,7 +72,7 @@ The choices below were made when the project started. Each records what was chos
 ### Configuration: koanf with hand-written validation
 
 **Chosen:** `knadh/koanf/v2` to merge file, environment, and flag sources; typed structs with a `Validate()` method per section.
-**Why:** The spec requires strict precedence (`KV-CFG-001`) and the rejection of unknown keys (`KV-CFG-020`). koanf is modular, has no global state, preserves key case, and decodes with unknown keys treated as errors. Validation is explicit Go code so every rule is visible and testable, and every error names its key.
+**Why:** The spec requires strict precedence (`KV-CFG-001`) and the rejection of unknown keys (`KV-CFG-020`). koanf is modular, has no global state, preserves key case, and decodes into typed structs. Unknown keys are detected by comparing every loaded key with the keys derived from the `Config` struct, which names each offending key exactly. Environment variables and flags are applied key by key from that same catalog, so no extra provider is needed. Validation is explicit Go code so every rule is visible and testable, and every error names its key.
 **Rejected:** Viper — global state by default, forced lower-casing of keys, a large transitive dependency tree, and no clean way to reject unknown keys. Hand-written loading — reimplements merging and environment mapping for no benefit.
 
 ### Assertions: testify
