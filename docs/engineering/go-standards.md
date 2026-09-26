@@ -146,7 +146,7 @@ Tests are exempt from function length and complexity limits, but a test that is 
 
 ## 9. Determinism, time, and randomness
 
-- Time is read through an injected `Clock` interface; tests drive it with a fake. Randomness comes from an injected source.
+- Time is read through an injected `clock.Clock` (`internal/clock`); tests drive it with `clocktest.Fake`. Randomness comes from an injected source.
 - The state machine never reads the clock or a random source at all (A-2): time-dependent values arrive inside commands.
 - Never iterate a map where the order can influence output, persisted state, or the wire. Sort keys first.
 

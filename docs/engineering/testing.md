@@ -62,7 +62,7 @@ assert.Equal(t, kverr.ReasonKeyTooLarge, kverr.ReasonOf(err))
 
 ## 6. Time, concurrency, and leaks
 
-- Time-dependent behavior — token refresh, lease expiry, election timing, backoff, snapshot intervals — is driven by a **fake clock** (`QA-003`). `time.Sleep` is never used to make a test pass.
+- Time-dependent behavior — token refresh, lease expiry, election timing, backoff, snapshot intervals — is driven by a **fake clock**, `clocktest.Fake` from `internal/clock/clocktest` (`QA-003`). `time.Sleep` is never used to make a test pass.
 - Integration and end-to-end tests that must wait for an asynchronous outcome poll with `require.Eventually` and a generous, documented bound.
 - Packages that start goroutines verify that none leak, with `go.uber.org/goleak` in `TestMain`:
 
