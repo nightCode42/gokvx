@@ -6,6 +6,7 @@ How gokvx is built. The [specification](../requirements.md) says *what* the syst
 |---|---|
 | [product-context.md](product-context.md) | Mission, positioning, design goals, non-goals, components, and phases |
 | [system-invariants.md](system-invariants.md) | The technical rules the system must never violate, with requirement references |
+| [storage-format.md](storage-format.md) | The exact, permanent on-disk format: data directory, command log records, recovery rules |
 | [go-standards.md](go-standards.md) | Go code standards: layout, comments, size limits, constructors, context, concurrency, observability, security |
 | [error-handling.md](error-handling.md) | The unified error model and how errors cross gRPC and HTTP boundaries |
 | [testing.md](testing.md) | Test strategy, conventions, and requirement traceability |

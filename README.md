@@ -29,6 +29,18 @@ A distributed, strongly consistent key-value store in Go: gRPC API, Raft replica
 - [ ] **Phase 3 — Horizontal scale:** slot-based sharding, multi-group routing, scatter-gather List/Watch
 - [ ] **Phase 4 — Elasticity:** dynamic membership, slot rebalancing, leases, transactions
 
+## Durability
+
+Every write is recorded in a command log before it is applied. `storage.fsync` decides when the log reaches the disk, and so what a machine crash can lose (`KV-STO-005`):
+
+| `storage.fsync` | Log flushed | A crash can lose |
+|---|---|---|
+| `always` (default) | before each write is acknowledged | nothing that was acknowledged |
+| `interval` | every `storage.fsync_interval` (100 ms by default) | writes acknowledged since the last flush |
+| `os` | whenever the operating system decides | any acknowledged write not yet flushed |
+
+A node logs a warning at startup whenever the setting is not `always`. The format and recovery rules are in [storage-format.md](docs/engineering/storage-format.md).
+
 ## Development
 
 Prerequisites: Go (version in `go.mod`), GNU Make, Git, and Python for [pre-commit](https://pre-commit.com).

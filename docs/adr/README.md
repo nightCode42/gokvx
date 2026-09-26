@@ -14,7 +14,7 @@ Files are named `NNNN-short-title.md` with a four-digit, never-reused number.
 | 0002 | Raft library rather than a bespoke implementation | Planned |
 | 0003 | Fixed slot space rather than a consistent hash ring | Planned |
 | 0004 | MVCC revision model | Planned |
-| 0005 | Pebble as the storage engine | Planned |
+| [0005](0005-pebble-storage-engine.md) | Pebble as the storage engine | Accepted |
 | 0006 | mTLS and JWT as complementary controls | Planned |
 | 0007 | GKE Autopilot versus Standard | Planned |
 | 0008 | gRPC as the sole client protocol | Planned |

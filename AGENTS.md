@@ -83,7 +83,7 @@ The maintainer decides. The chosen document change lands in the **same pull requ
 | Adding or upgrading a dependency | [dependencies.md](docs/engineering/dependencies.md) |
 | Git, branches, commits, PRs | [workflow.md](docs/engineering/workflow.md) |
 | `proto/` or the wire contract | spec §4.3, §8, Appendix A; system-invariants §Proto contract |
-| `internal/storage` | `internal/storage/AGENTS.md`, spec §9 |
+| `internal/storage` | `internal/storage/AGENTS.md`, spec §9, [storage-format.md](docs/engineering/storage-format.md) |
 | `internal/mvcc` | `internal/mvcc/AGENTS.md`, spec §7.1 |
 | `internal/consensus` | `internal/consensus/AGENTS.md`, spec §10.1–10.2 |
 | `internal/shard` | `internal/shard/AGENTS.md`, spec §7.3, §10.3 |

@@ -121,7 +121,7 @@ Source: spec §8.5.
 
 ## 8. Storage and durability
 
-Source: spec §9. There are **two logs** with different jobs: the command log records *intent* (what must be applied); the Pebble engine's own WAL records *state*.
+Source: spec §9. There are **two logs** with different jobs: the command log records *intent* (what must be applied); the Pebble engine's own WAL records *state*. The exact byte layout and recovery rules are in [storage-format.md](storage-format.md).
 
 - **Engine.** Pebble, behind an `Engine` interface so tests can substitute it (`KV-STO-001`).
 - **Command log format.** Segmented files of configurable size. Each record is length-prefixed and protected by a CRC32C checksum over its payload (`KV-STO-002`).

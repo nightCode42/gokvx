@@ -578,15 +578,15 @@ flowchart TB
 
 | ID | Phase | Priority | Requirement | Status |
 |---|---|---|---|---|
-| `KV-STO-001` | P1 | MUST | The state machine **MUST** persist data in an embedded LSM-tree engine. The reference implementation **MUST** use `cockroachdb/pebble`. The engine **MUST** sit behind an `Engine` interface so it can be substituted in tests. | SPEC |
-| `KV-STO-002` | P1 | MUST | The replication log **MUST** be segmented into files of a configurable size, each record length-prefixed and protected by a CRC32C checksum over the payload. | SPEC |
-| `KV-STO-003` | P1 | MUST | On startup the node **MUST** recover by opening the engine, reading the persisted `applied_index`, and replaying every log record with a higher index. Recovery **MUST** be idempotent: replaying the same records twice **MUST** produce identical state. | SPEC |
-| `KV-STO-004` | P1 | MUST | A record whose checksum fails **MUST** terminate replay at that point. Trailing corrupt or torn records **MUST** be truncated, and the event **MUST** be logged at `WARN` with the offset. A checksum failure in the middle of an otherwise valid log **MUST** cause startup to abort with a non-zero exit code. | SPEC |
-| `KV-STO-005` | P1 | MUST | The fsync policy **MUST** be configurable as `always` (fsync before acknowledging each write), `interval` (fsync every *N* milliseconds), or `os` (no explicit fsync). The default **MUST** be `always`. The durability implication of each setting **MUST** be documented in the README, and the node **MUST** log a `WARN` at startup when not running with `always`. | SPEC |
+| `KV-STO-001` | P1 | MUST | The state machine **MUST** persist data in an embedded LSM-tree engine. The reference implementation **MUST** use `cockroachdb/pebble`. The engine **MUST** sit behind an `Engine` interface so it can be substituted in tests. | DONE |
+| `KV-STO-002` | P1 | MUST | The replication log **MUST** be segmented into files of a configurable size, each record length-prefixed and protected by a CRC32C checksum over the payload. | DONE |
+| `KV-STO-003` | P1 | MUST | On startup the node **MUST** recover by opening the engine, reading the persisted `applied_index`, and replaying every log record with a higher index. Recovery **MUST** be idempotent: replaying the same records twice **MUST** produce identical state. | WIP |
+| `KV-STO-004` | P1 | MUST | A record whose checksum fails **MUST** terminate replay at that point. Trailing corrupt or torn records **MUST** be truncated, and the event **MUST** be logged at `WARN` with the offset. A checksum failure in the middle of an otherwise valid log **MUST** cause startup to abort with a non-zero exit code. | WIP |
+| `KV-STO-005` | P1 | MUST | The fsync policy **MUST** be configurable as `always` (fsync before acknowledging each write), `interval` (fsync every *N* milliseconds), or `os` (no explicit fsync). The default **MUST** be `always`. The durability implication of each setting **MUST** be documented in the README, and the node **MUST** log a `WARN` at startup when not running with `always`. | WIP |
 | `KV-STO-006` | P1 | MUST | The node **MUST** take a snapshot when the number of applied entries since the last snapshot exceeds a configurable threshold, defaulting to 10,000, or when a configurable interval elapses. | SPEC |
 | `KV-STO-007` | P1 | MUST | A snapshot **MUST** be written atomically: written to a temporary path, fsynced, then renamed, with the containing directory fsynced. A partially written snapshot **MUST NOT** be selectable during recovery. | SPEC |
 | `KV-STO-008` | P1 | MUST | Log segments entirely covered by a durable snapshot **MUST** be eligible for deletion, and a configurable number of segments **MUST** be retained beyond that point to aid follower catch-up and debugging. | SPEC |
-| `KV-STO-009` | P1 | MUST | Startup **MUST** fail fast with a clear message if the data directory was written by an incompatible storage format version. A `storage_version` marker file **MUST** be maintained. | SPEC |
+| `KV-STO-009` | P1 | MUST | Startup **MUST** fail fast with a clear message if the data directory was written by an incompatible storage format version. A `storage_version` marker file **MUST** be maintained. | WIP |
 | `KV-STO-010` | P1 | MUST | The node **MUST** enforce a configurable database size quota. On exceeding it, the node **MUST** reject writes with `RESOURCE_EXHAUSTED` while continuing to serve reads, and **MUST** raise an alertable metric. | SPEC |
 | `KV-STO-011` | P2 | MUST | Snapshot transfer to a lagging follower **MUST** be streamed in chunks with flow control, **MUST** be resumable or safely restartable, and **MUST NOT** buffer the entire snapshot in memory on either side. | SPEC |
 | `KV-STO-012` | P1 | SHOULD | The revision index **SHOULD** be reconstructible from the engine on startup, and the reconstruction time **SHOULD** be reported as a startup metric. | SPEC |
@@ -595,9 +595,9 @@ flowchart TB
 
 | ID | Phase | Priority | Requirement | Status |
 |---|---|---|---|---|
-| `KV-STO-020` | P1 | MUST | A crash-recovery test suite **MUST** exist that kills the process with `SIGKILL` at randomized points during a sustained write workload, restarts it, and asserts that every acknowledged write is present and no unacknowledged write is partially applied. | SPEC |
-| `KV-STO-021` | P1 | MUST | The suite **MUST** include a torn-write test that truncates the final log record at a random byte offset and asserts clean recovery. | SPEC |
-| `KV-STO-022` | P1 | SHOULD | The suite **SHOULD** include a bit-flip test asserting that corruption is detected rather than silently applied. | SPEC |
+| `KV-STO-020` | P1 | MUST | A crash-recovery test suite **MUST** exist that kills the process with `SIGKILL` at randomized points during a sustained write workload, restarts it, and asserts that every acknowledged write is present and no unacknowledged write is partially applied. | WIP |
+| `KV-STO-021` | P1 | MUST | The suite **MUST** include a torn-write test that truncates the final log record at a random byte offset and asserts clean recovery. | DONE |
+| `KV-STO-022` | P1 | SHOULD | The suite **SHOULD** include a bit-flip test asserting that corruption is detected rather than silently applied. | DONE |
 
 ---
 
@@ -1374,6 +1374,7 @@ A monorepo is used so that the `.proto` contract, both services, the deployment 
 │   ├── auth/                         # JWKS cache, verifier, scope authorizer
 │   ├── mvcc/                         # revision index, snapshot reads
 │   ├── storage/                      # Engine interface, Pebble impl, CommandLog
+│   ├── clock/                        # injectable clock and its fake (QA-003)
 │   ├── consensus/                    # Raft node, transport, apply loop
 │   ├── shard/                        # slot function, slot map, routing
 │   ├── lease/                        # lease manager

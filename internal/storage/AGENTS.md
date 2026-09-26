@@ -1,6 +1,6 @@
 # internal/storage — Agent Notes
 
-The `Engine` interface with its Pebble implementation, and the file-backed `CommandLog`. This package decides whether an acknowledged write survives a crash. Read spec §9 and [system-invariants §8](../../docs/engineering/system-invariants.md#8-storage-and-durability) before editing.
+The `Engine` interface with its Pebble implementation, and the file-backed `CommandLog`. This package decides whether an acknowledged write survives a crash. Read spec §9 and [system-invariants §8](../../docs/engineering/system-invariants.md#8-storage-and-durability), and the exact on-disk format in [storage-format.md](../../docs/engineering/storage-format.md), before editing.
 
 ## Invariants
 
