@@ -16,12 +16,12 @@ How a change moves from an idea to `main`. The rules here apply to every contrib
 - One branch implements **one slice of requirements** — small enough to review in one sitting, complete enough to be tested and useful on its own.
 - Before writing code, identify the requirement IDs the slice covers and read their spec sections and the relevant handbook documents (see the routing table in `AGENTS.md` §4).
 - If the slice needs a decision the spec does not make, record it as an ADR in the same PR — or stop and ask when it touches the triggers in `AGENTS.md` §7.
-- Order of work within a slice: types and interfaces → tests → implementation → documentation. Tests for a behaviour exist before the behaviour is called done.
+- Order of work within a slice: types and interfaces → tests → implementation → documentation. Tests for a behavior exist before the behavior is called done.
 
 ## 3. Branches
 
 - Created from an up-to-date `main`: `git switch main && git pull && git switch -c <branch>`.
-- Named `<type>/<short-kebab-description>`, using the Conventional Commits types: `feat/command-log`, `fix/jwks-refresh-backoff`, `docs/error-catalogue`, `test/mvcc-properties`, `ci/buf-breaking`, `chore/deps-grouping`.
+- Named `<type>/<short-kebab-description>`, using the Conventional Commits types: `feat/command-log`, `fix/jwks-refresh-backoff`, `docs/error-catalog`, `test/mvcc-properties`, `ci/buf-breaking`, `chore/deps-grouping`.
 - Short-lived: merged or closed within days, not weeks.
 - `main` is protected: changes arrive only through pull requests with passing checks and linear history.
 
@@ -56,9 +56,9 @@ How a change moves from an idea to `main`. The rules here apply to every contrib
 A change is done when **all** of the following hold:
 
 - [ ] `make check` passes locally; CI passes on the pull request.
-- [ ] New behaviour is covered by tests that name their requirement IDs (`QA-071`).
+- [ ] New behavior is covered by tests that name their requirement IDs (`QA-071`).
 - [ ] The `Status` of every implemented requirement is updated in `docs/requirements.md` in the same PR (`QA-072`).
-- [ ] Doc comments, package documentation, and the handbook are updated where behaviour or rules changed.
+- [ ] Doc comments, package documentation, and the handbook are updated where behavior or rules changed.
 - [ ] No document contradicts the code: any divergence was presented to the maintainer (`AGENTS.md` §3) and every document restating the affected rule is updated in this PR.
 - [ ] A new design decision is recorded as an ADR.
 - [ ] `docs/WORKLOG.md` reflects the new state and the next step.

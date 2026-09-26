@@ -23,7 +23,7 @@ Every third-party module is a long-term commitment: code we run but did not writ
 | RPC | `google.golang.org/genproto/googleapis/rpc` | `google.rpc.Status`, `ErrorInfo`, `RetryInfo`, `BadRequest` error details |
 | Storage | `github.com/cockroachdb/pebble/v2` | Embedded LSM storage engine (`KV-STO-001`, `ADR-0005`) |
 | Consensus | `go.etcd.io/raft/v3` | Raft algorithm; storage, transport, and apply loop are ours (`KV-CON-001`, `ADR-0002`) |
-| Security | `github.com/golang-jwt/jwt/v5` | JWT parsing and standard claim validation; the JWKS cache and refresh logic are ours, because the spec defines their behaviour precisely (`KV-SEC-012`–`019`) |
+| Security | `github.com/golang-jwt/jwt/v5` | JWT parsing and standard claim validation; the JWKS cache and refresh logic are ours, because the spec defines their behavior precisely (`KV-SEC-012`–`019`) |
 | Security | `github.com/fsnotify/fsnotify` | Watching certificate files for hot reload (`KV-SEC-005`) |
 | Resilience | `golang.org/x/time` | Token-bucket rate limiting (`KV-SEC-032`) |
 | Resilience | `golang.org/x/sync` | `errgroup` for goroutine lifecycles; `singleflight` for token refresh (`MS1-SEC-005`) |
@@ -97,7 +97,7 @@ The choices below were made when the project started. Each records what was chos
 
 **Chosen:** Small, hand-written fakes of gokvx's own interfaces, in `<package>test` packages, verified by the same contract tests as the real implementations.
 **Why:** Fakes behave like the real thing, keep tests readable, and do not break when internal call order changes. This follows the Go community's and Google's guidance, and interfaces kept small (go-standards.md §2) make fakes cheap to write.
-**Rejected:** Generated mocks (`mockery`, `gomock`, `testify/mock`) — they couple tests to call sequences rather than behaviour, and generated code adds noise to every change.
+**Rejected:** Generated mocks (`mockery`, `gomock`, `testify/mock`) — they couple tests to call sequences rather than behavior, and generated code adds noise to every change.
 
 ### Protocol Buffers: `buf` with local plugins
 

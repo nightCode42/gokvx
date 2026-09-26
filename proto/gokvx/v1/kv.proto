@@ -1,7 +1,7 @@
 // Package gokvx.v1 is the gokvx wire contract (spec Appendix A).
 //
 // The contract is defined in full in Phase 1, including every field later
-// phases need (KV-API-000). A field whose behaviour is not yet implemented is
+// phases need (KV-API-000). A field whose behavior is not yet implemented is
 // accepted and answered with UNIMPLEMENTED and the ErrorInfo reason
 // FEATURE_NOT_IN_CURRENT_PHASE. After the Phase 1 tag no field is added,
 // removed, renumbered, or changed in meaning; removed fields are reserved.

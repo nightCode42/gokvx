@@ -15,7 +15,7 @@
 <!-- Tick what applies. Leave an item unticked and append "N/A" when it does not apply to this change. -->
 
 - [ ] `make check` passes locally
-- [ ] Docs, doc comments, and `docs/WORKLOG.md` updated where behaviour or rules changed
+- [ ] Docs, doc comments, and `docs/WORKLOG.md` updated where behavior or rules changed
 - [ ] ADR added for any new design decision or dependency
 
 **Implements requirements** (`feat` and `fix` only):

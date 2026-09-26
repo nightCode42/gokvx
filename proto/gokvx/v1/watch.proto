@@ -80,11 +80,11 @@ message WatchResponse {
   int64 watch_id = 2;
   // The watch was created.
   bool created = 3;
-  // The watch was cancelled; see cancel_reason.
+  // The watch was canceled; see cancel_reason.
   bool canceled = 4;
-  // Why the watch was cancelled.
+  // Why the watch was canceled.
   string cancel_reason = 5;
-  // Set when the watch was cancelled because start_revision precedes the
+  // Set when the watch was canceled because start_revision precedes the
   // compaction point (KV-API-043).
   int64 compact_revision = 6;
   // Events, all sharing one revision, so a transaction is observed

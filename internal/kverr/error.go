@@ -1,6 +1,7 @@
 package kverr
 
 import (
+	"log/slog"
 	"maps"
 	"slices"
 	"time"
@@ -111,6 +112,25 @@ func (e *Error) Unwrap() error {
 		return nil
 	}
 	return e.cause
+}
+
+// LogValue renders the error for structured logs as a group of its reason,
+// kind, message, and cause, so every log line reports errors the same way.
+// The cause may hold internal detail and belongs in logs only, never in a
+// client response.
+func (e *Error) LogValue() slog.Value {
+	if e == nil {
+		return slog.StringValue("<nil>")
+	}
+	attrs := []slog.Attr{
+		slog.String("reason", string(e.reason)),
+		slog.String("kind", e.Kind().String()),
+		slog.String("message", e.message),
+	}
+	if e.cause != nil {
+		attrs = append(attrs, slog.String("cause", e.cause.Error()))
+	}
+	return slog.GroupValue(attrs...)
 }
 
 // Is reports whether target is an *Error with the same reason. It lets

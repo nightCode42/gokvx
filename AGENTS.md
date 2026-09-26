@@ -117,7 +117,7 @@ These are not guidelines. A change that breaks one is not mergeable.
 
 ### Go code
 
-- `context.Context` is the first parameter of every function that does I/O, blocks, or crosses a package boundary, and deadlines are honoured.
+- `context.Context` is the first parameter of every function that does I/O, blocks, or crosses a package boundary, and deadlines are honored.
 - Every goroutine has an owner, a shutdown path, and a test proving it does not leak.
 - Time and randomness are injected. Tests never use `time.Sleep` for correctness.
 - Every function and method carries a doc comment stating what it does; every package has a `doc.go`. See [go-standards.md §Comments](docs/engineering/go-standards.md#4-comments-and-documentation).

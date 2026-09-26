@@ -12,7 +12,7 @@ Phase tags mark when a rule becomes binding. Rules without a tag apply from Phas
 - `Put`, `Delete`, `CompareAndSwap`, `Compact`, and `Txn` are linearizable: once a response is returned, every later linearizable read observes the effect (`KV-API-015`).
 - Read consistency modes (spec §6.4, `KV-API-011`):
 
-| Mode | Behaviour |
+| Mode | Behavior |
 |---|---|
 | `LINEARIZABLE` (default) | P1: served after all committed commands are applied. P2+: ReadIndex — confirm leadership with a quorum heartbeat, wait until `applied_index ≥ read_index`, then serve. |
 | `SERIALIZABLE` | Served from the local replica's applied state with no coordination. Possibly stale. |
@@ -110,12 +110,12 @@ Source: spec §7.3, `ADR-0003`. **The slot function is permanent.** Changing it 
 
 Source: spec §8.5.
 
-- One bidirectional stream carries many logical watches, each created and cancelled by client-assigned `watch_id` (`KV-API-040`).
+- One bidirectional stream carries many logical watches, each created and canceled by client-assigned `watch_id` (`KV-API-040`).
 - A watch selects a key, a prefix, or a range — exactly one (`KV-API-041`).
 - With `start_revision`, historical events are replayed first, in revision order, **with no gaps**, before live events (`KV-API-042`).
 - If `start_revision` is below the compaction point, the watch receives a response with `canceled = true` and `compact_revision` set; events are never skipped silently. This is a watch response, not a gRPC error — the stream stays open (`KV-API-043`).
 - Events arrive in non-decreasing revision order, and **all events of one revision arrive in one message**, so a transaction is observed atomically (`KV-API-044`).
-- Per-stream buffering is bounded. A consumer too slow for the limit has its watch cancelled with `RESOURCE_EXHAUSTED`; memory never grows unbounded (`KV-API-045`).
+- Per-stream buffering is bounded. A consumer too slow for the limit has its watch canceled with `RESOURCE_EXHAUSTED`; memory never grows unbounded (`KV-API-045`).
 - A stream is terminated when its authenticating token expires (`KV-SEC-026`).
 - P3: multi-group watches guarantee ordering per group only, and each event reports its originating group (`KV-API-047`).
 
